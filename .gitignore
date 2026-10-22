@@ -1,0 +1,24 @@
+# Laravel & PHP
+/vendor
+/node_modules
+/.idea
+/.vscode
+/.env
+/.env.backup
+.env.production
+/public/hot
+/public/storage
+/storage/*.key
+/storage/logs/*.log
+/.fleet
+/.nova
+.phpunit.cache
+.phpunit.result.cache
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build
+/public/build
