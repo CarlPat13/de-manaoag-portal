@@ -1,7 +1,5 @@
 <?php
-
 namespace App\Http\Controllers;
-
 use App\Models\User;
 use App\Models\Student;
 use App\Models\Faculty;
@@ -316,21 +314,25 @@ class PortalController extends Controller
             return redirect()->route('login')->withErrors(['login' => 'Faculty account required.']);
         }
         
+        // LIGTAS NA PAGKUHA — walang error kahit wala pang record
         $faculty = Faculty::where('user_id', $user->id)->first();
         
+        // Kung wala sa user_id, subukan sa email
         if (!$faculty) {
             $faculty = Faculty::where('email', $user->email)->first();
             
+            // Kung nakita sa email pero walang user_id — ikonekta natin
             if ($faculty && is_null($faculty->user_id)) {
                 try {
                     $faculty->user_id = $user->id;
                     $faculty->save();
                 } catch (\Exception $e) {
-                    // Hayaan kung may error — hindi hahadlang sa pagpapakita ng pahina
+                    // Hayaan — hindi hahadlang sa pagpapakita ng pahina
                 }
             }
         }
         
+        // Kumuha ng mga klase — KUNG MAY FACULTY RECORD
         $classes = collect([]);
         if ($faculty) {
             $classes = ClassModel::where('faculty_id', $faculty->id)
@@ -339,7 +341,11 @@ class PortalController extends Controller
                 ->get();
         }
         
-        return view('faculty.dashboard', compact('faculty', 'classes'));
+        // ✅ I-PASA SA VIEW — kahit walang laman, hindi magka-error
+        return view('faculty.dashboard', [
+            'faculty' => $faculty,
+            'classes' => $classes
+        ]);
     }
 
     public function facultySchedule()
