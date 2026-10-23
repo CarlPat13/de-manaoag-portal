@@ -308,24 +308,43 @@ class PortalController extends Controller
         ]);
     }
 
-    // === FACULTY PAGES ===
- public function facultyDashboard()
-{
-    $user = Auth::user();
-    
-    $faculty = Faculty::where('user_id', $user->id)->first();
-    
-    if (!$faculty) {
-        return "⚠️ WALANG FACULTY RECORD! User ID: {$user->id}, Email: {$user->email}";
+    // === FACULTY PAGES — SIMPLE & WORKING ===
+    public function facultyDashboard()
+    {
+        $user = Auth::user();
+        
+        $faculty = Faculty::where('user_id', $user->id)->first();
+        
+        if (!$faculty) {
+            return "⚠️ WALANG FACULTY RECORD! User ID: {$user->id}, Email: {$user->email}";
+        }
+        
+        $classes = ClassModel::where('faculty_id', $faculty->id)
+            ->with(['subject'])
+            ->latest()
+            ->get();
+        
+        // Kung wala pang view file — simpleng display lang
+        if (view()->exists('faculty.dashboard')) {
+            return view('faculty.dashboard', compact('faculty', 'classes'));
+        }
+        
+        // Simpleng output para hindi mag-error
+        $output = "<h1>Welcome, {$faculty->first_name} {$faculty->last_name}!</h1>";
+        $output .= "<p><strong>Faculty ID:</strong> {$faculty->faculty_id}</p>";
+        $output .= "<p><strong>Department:</strong> {$faculty->department}</p>";
+        $output .= "<h3>Your Classes ({$classes->count()})</h3>";
+        $output .= "<ul style='line-height:1.8;'>";
+        foreach ($classes as $class) {
+            $subject = $class->subject;
+            $output .= "<li><strong>{$subject?->code ?? 'N/A'}</strong> - {$subject?->name ?? 'No Subject'}";
+            $output .= " | Schedule: {$class->schedule ?? 'Not Set'}";
+            $output .= " | Room: {$class->room ?? 'Not Assigned'}</li>";
+        }
+        $output .= "</ul>";
+        
+        return $output;
     }
-    
-    $classes = ClassModel::where('faculty_id', $faculty->id)
-        ->with(['subject'])
-        ->latest()
-        ->get();
-    
-    return "✅ MAY RECORD! Pangalan: {$faculty->first_name} {$faculty->last_name} | Klase: {$classes->count()}";
-}
 
     public function classStudents($classId)
     {
@@ -346,7 +365,21 @@ class PortalController extends Controller
                 ->with(['enrollments.student'])
                 ->firstOrFail();
             
-            return view('faculty.class-students', compact('class'));
+            if (view()->exists('faculty.class-students')) {
+                return view('faculty.class-students', compact('class'));
+            }
+            
+            // Simpleng display kung wala pang view file
+            $output = "<h3>Class: {$class->subject?->code} - {$class->subject?->name}</h3>";
+            $output .= "<p>Schedule: {$class->schedule} | Room: {$class->room}</p>";
+            $output .= "<h4>Students ({$class->enrollments->count()})</h4><ol>";
+            foreach ($class->enrollments as $enroll) {
+                $student = $enroll->student;
+                $output .= "<li>{$student->first_name} {$student->last_name} ({$student->student_id})";
+                $output .= " — Grade: " . ($enroll->grade ?? 'Pending') . "</li>";
+            }
+            $output .= "</ol>";
+            return $output;
             
         } catch (\Exception $e) {
             return "🔥 Error: " . $e->getMessage();
