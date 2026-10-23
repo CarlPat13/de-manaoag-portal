@@ -24,7 +24,7 @@
 
         <div class="mb-8">
             <h1 class="text-3xl font-bold text-white">
-                Welcome, {{ $faculty->first_name ?? Auth::user()->name ?? 'Faculty Member' }}! 👋
+                Welcome, {{ optional($faculty)->first_name ?? Auth::user()->name ?? 'Faculty Member' }}! 👋
             </h1>
             <p class="text-blue-200 mt-2">Faculty Portal — Manage your classes and students.</p>
         </div>
@@ -33,13 +33,13 @@
             <div class="bg-white/95 p-5 rounded-xl shadow-sm">
                 <p class="text-sm text-gray-500">Faculty ID</p>
                 <p class="text-xl font-bold text-blue-900 mt-1">
-                    {{ $faculty->faculty_id ?? 'Not Assigned' }}
+                    {{ optional($faculty)->faculty_id ?? 'Not Assigned' }}
                 </p>
             </div>
             <div class="bg-white/95 p-5 rounded-xl shadow-sm">
                 <p class="text-sm text-gray-500">Department</p>
                 <p class="text-xl font-bold text-blue-900 mt-1">
-                    {{ $faculty->department ?? 'Not Set' }}
+                    {{ optional($faculty)->department ?? 'Not Set' }}
                 </p>
             </div>
             <div class="bg-white/95 p-5 rounded-xl shadow-sm">
@@ -62,7 +62,7 @@
                     @foreach($myClasses as $class)
                     <div class="bg-white/95 p-5 rounded-xl shadow-sm">
                         <h3 class="font-bold text-lg text-blue-900">
-                            {{ $class->subject->code ?? 'N/A' }} - {{ $class->subject->name ?? 'Unknown Subject' }}
+                            {{ optional($class->subject)->code ?? 'N/A' }} - {{ optional($class->subject)->name ?? 'Unknown Subject' }}
                         </h3>
                         <p class="text-gray-600 mt-1">
                             {{ $class->schedule ?? 'Schedule not set' }} • Room {{ $class->room ?? 'Not set' }}

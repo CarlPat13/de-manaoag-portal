@@ -9,7 +9,7 @@ Route::get('/register', [PortalController::class, 'showRegistration'])->name('re
 Route::post('/register', [PortalController::class, 'register']);
 Route::get('/login', [PortalController::class, 'showLogin'])->name('login');
 Route::post('/login', [PortalController::class, 'login']);
-Route::post('/logout', [PortalController::class, 'logout']);
+Route::post('/logout', [PortalController::class, 'logout'])->name('logout');
 
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [PortalController::class, 'dashboard'])->name('dashboard');

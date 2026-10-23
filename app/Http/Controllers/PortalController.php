@@ -283,9 +283,9 @@ class PortalController extends Controller
             $faculty = $class->faculty;
 
             return [
-                'code'     => $subject?->code ?? 'N/A',
-                'name'     => $subject?->name ?? 'N/A',
-                'units'    => $subject?->units ?? 3,
+                'code'     => optional($subject)->code ?? 'N/A',
+                'name'     => optional($subject)->name ?? 'N/A',
+                'units'    => optional($subject)->units ?? 3,
                 'schedule' => $class->schedule ?? '-',
                 'room'     => $class->room ?? 'Not Assigned',
                 'faculty'  => $faculty ? $faculty->first_name . ' ' . $faculty->last_name : 'Not Assigned',
@@ -330,8 +330,10 @@ class PortalController extends Controller
                 ->get();
         }
         
-        return view('faculty.dashboard', compact('faculty', 'myClasses'))
-            ->with('warning', $faculty ? null : '⚠️ No faculty record linked. Contact admin.');
+        return view('faculty.dashboard', [
+            'faculty' => $faculty,
+            'myClasses' => $myClasses
+        ])->with('warning', $faculty ? null : '⚠️ No faculty record linked. Contact admin.');
     }
 
     public function facultySchedule()
