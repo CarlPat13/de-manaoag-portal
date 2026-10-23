@@ -1,5 +1,7 @@
 <?php
+
 namespace App\Http\Controllers;
+
 use App\Models\User;
 use App\Models\Student;
 use App\Models\Faculty;
@@ -42,8 +44,8 @@ class PortalController extends Controller
         $nextNumber = ($latestStudent && preg_match('/(\d+)$/', $latestStudent->student_id, $m))
             ? intval($m[1]) + 1
             : 1;
-
         $studentId = date('Y') . '-' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
+
         $fullName = trim($validated['first_name'] . ' '
             . ($validated['middle_name'] ? $validated['middle_name'].' ' : '')
             . $validated['last_name']);
@@ -308,8 +310,8 @@ class PortalController extends Controller
         ]);
     }
 
-    // === FACULTY PAGES — SIMPLE & WORKING ===
-       public function facultyDashboard()
+    // === FACULTY PAGES ===
+    public function facultyDashboard()
     {
         $user = Auth::user();
         
@@ -319,13 +321,31 @@ class PortalController extends Controller
             return "⚠️ WALANG FACULTY RECORD! User ID: {$user->id}, Email: {$user->email}";
         }
         
-        // Kunin ang mga klase KASAMA ang subject details
         $myClasses = ClassModel::where('faculty_id', $faculty->id)
-            ->with('subject') // I-load ang subject para makuha ang code at name
+            ->with('subject')
             ->latest()
             ->get();
         
         return view('faculty.dashboard', compact('faculty', 'myClasses'));
+    }
+
+    public function facultySchedule()
+    {
+        $user = Auth::user();
+        
+        $faculty = Faculty::where('user_id', $user->id)->first();
+        
+        if (!$faculty) {
+            return "⚠️ Faculty record not found.";
+        }
+        
+        // ✅ Idinagdag ang enrollments para sa bilang ng estudyante
+        $myClasses = ClassModel::where('faculty_id', $faculty->id)
+            ->with(['subject', 'enrollments'])
+            ->latest()
+            ->get();
+        
+        return view('faculty.schedule', compact('faculty', 'myClasses'));
     }
 
     public function classStudents($classId)
@@ -351,7 +371,6 @@ class PortalController extends Controller
                 return view('faculty.class-students', compact('class'));
             }
             
-            // Simpleng display kung wala pang view file
             $output = "<h3>Class: {$class->subject?->code} - {$class->subject?->name}</h3>";
             $output .= "<p>Schedule: {$class->schedule} | Room: {$class->room}</p>";
             $output .= "<h4>Students ({$class->enrollments->count()})</h4><ol>";
