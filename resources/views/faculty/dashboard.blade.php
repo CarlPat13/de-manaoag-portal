@@ -16,7 +16,6 @@
 </head>
 <body>
     @include('layouts.nav')
-
     <div class="max-w-6xl mx-auto px-4 py-8">
         <div class="mb-8">
             <h1 class="text-3xl font-bold text-white mb-2">Welcome, {{ Auth::user()->name }}! 👋</h1>
@@ -40,7 +39,12 @@
 
         <h2 class="text-xl font-bold text-white mb-4">📋 My Classes</h2>
 
-        @if($classes->isEmpty())
+        @if(!$faculty)
+            <div class="bg-yellow-50 p-6 rounded-xl text-center">
+                <p class="text-yellow-700 font-medium">⚠️ Your faculty profile is not yet linked.</p>
+                <p class="text-yellow-600 text-sm mt-1">Please contact the administrator to connect your account.</p>
+            </div>
+        @elseif($classes->isEmpty())
             <div class="bg-white/90 p-6 rounded-xl text-gray-500 text-center">
                 No classes assigned yet.
             </div>
@@ -50,14 +54,13 @@
                     <div class="bg-white/95 rounded-xl shadow-sm overflow-hidden">
                         <div class="bg-blue-50 px-5 py-4 border-b">
                             <h3 class="font-bold text-lg text-blue-900">
-                                {{ $class->code }} — {{ $class->subject ? $class->subject->name : 'Unknown Subject' }}
+                                {{ optional($class->subject)->code ?? 'N/A' }} — {{ optional($class->subject)->name ?? 'Unknown Subject' }}
                             </h3>
                             <p class="text-sm text-gray-600 mt-1">
-                                {{ $class->schedule ? $class->schedule : 'Schedule not set' }}
+                                {{ $class->schedule ?? 'Schedule not set' }}
                                 @if($class->room) • {{ $class->room }} @endif
                             </p>
                         </div>
-
                         <div class="p-5">
                             <h4 class="font-semibold text-gray-700 mb-3">
                                 Enrolled Students — {{ $class->enrollments->count() }} student(s)
@@ -82,13 +85,13 @@
                                                 @foreach($class->enrollments as $enrollment)
                                                     <tr class="border-b last:border-0">
                                                         <td class="py-3 font-mono">
-                                                            {{ $enrollment->student ? $enrollment->student->student_id : 'N/A' }}
+                                                            {{ optional($enrollment->student)->student_id ?? 'N/A' }}
                                                         </td>
                                                         <td class="py-3">
-                                                            {{ $enrollment->student ? $enrollment->student->last_name : '' }}, {{ $enrollment->student ? $enrollment->student->first_name : '' }}
+                                                            {{ optional($enrollment->student)->last_name ?? '' }}, {{ optional($enrollment->student)->first_name ?? '' }}
                                                         </td>
                                                         <td class="py-3 text-gray-500">
-                                                            {{ $enrollment->grade ? $enrollment->grade : '— Pending' }}
+                                                            {{ $enrollment->grade ?? '— Pending' }}
                                                         </td>
                                                         <td class="py-3">
                                                             <input type="hidden" name="enrollment_ids[]" value="{{ $enrollment->id }}">
@@ -97,7 +100,7 @@
                                                                 name="grades[]" 
                                                                 value="{{ $enrollment->grade }}"
                                                                 class="w-20 px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-yellow-400 text-center"
-                                                                placeholder="2">
+                                                                placeholder="1.00">
                                                         </td>
                                                     </tr>
                                                 @endforeach
