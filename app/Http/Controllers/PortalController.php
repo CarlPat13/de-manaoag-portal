@@ -312,30 +312,34 @@ class PortalController extends Controller
 
     // === FACULTY PAGES — ✅ AYOS NA, HINDI MAGKA-CRASH ===
     public function facultyDashboard()
-    {
-        $user = Auth::user();
-        
-        if (!$user || $user->role !== 'faculty') {
-            return redirect()->route('login')->withErrors(['login' => 'Faculty account required.']);
-        }
-        
-        $faculty = Faculty::where('user_id', $user->id)->first();
-        
-        // ✅ KUNG WALANG RECORD — HUWAG MAG-CRASH, IPakita LANG WALANG LAMAN
-        if (!$faculty) {
-            return view('faculty.dashboard', [
-                'faculty' => null,
-                'myClasses' => collect([])
-            ])->with('warning', 'Your faculty record is not yet linked. Please contact admin.');
-        }
-        
-        $myClasses = ClassModel::where('faculty_id', $faculty->id)
-            ->with(['subject', 'enrollments'])
-            ->latest()
-            ->get();
-        
-        return view('faculty.dashboard', compact('faculty', 'myClasses'));
+{
+    $user = Auth::user();
+    
+    if (!$user || $user->role !== 'faculty') {
+        return redirect()->route('login')->withErrors(['login' => 'Faculty account required.']);
     }
+    
+    $faculty = Faculty::where('user_id', $user->id)->first();
+    
+    if (!$faculty) {
+        return view('faculty.dashboard', [
+            'faculty' => null,
+            'classes' => collect([]),
+            'myClasses' => collect([])
+        ])->with('warning', 'Your faculty record is not yet linked. Contact admin.');
+    }
+    
+    $data = ClassModel::where('faculty_id', $faculty->id)
+        ->with(['subject', 'enrollments'])
+        ->latest()
+        ->get();
+    
+    return view('faculty.dashboard', [
+        'faculty' => $faculty,
+        'classes' => $data,
+        'myClasses' => $data
+    ]);
+}
 
     public function facultySchedule()
     {
