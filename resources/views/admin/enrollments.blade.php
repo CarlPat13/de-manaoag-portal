@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enroll Students - De Manaoag University</title>
+    <title>Enrollments - De Manaoag University</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -17,187 +17,155 @@
 </head>
 <body>
     @include('layouts.nav')
-    <div class="max-w-4xl mx-auto px-4 py-8">
-        <h1 class="text-2xl font-bold text-white mb-6">📋 Enroll Students</h1>
-        
+
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold text-white mb-8">📋 Student Enrollments</h1>
+
         @if(session('success'))
-            <div class="bg-green-100/90 text-green-700 p-4 rounded-lg mb-6 backdrop-blur-sm">
-                ✅ {{ session('success') }}
+            <div class="bg-green-50 border-l-4 border-green-500 text-green-700 p-4 mb-6 rounded-r-lg">
+                {{ session('success') }}
             </div>
         @endif
 
-        {{-- ✅ DATA PROCESSING — NASA LABAS NG SCRIPT --}}
-        @php
-            $allClassesData = $classes->map(function($c) {
-                return [
-                    'subject_id' => $c->subject_id,
-                    'faculty_id' => $c->faculty_id,
-                    'faculty_name' => $c->faculty ? $c->faculty->first_name.' '.$c->faculty->last_name : null,
-                ];
-            })->values();
-        @endphp
+        @if($errors->any())
+            <div class="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded-r-lg">
+                @foreach($errors->all() as $error)
+                    <p>{{ $error }}</p>
+                @endforeach
+            </div>
+        @endif
 
-        {{-- ENROLLMENT FORM --}}
-        <div class="bg-white/95 p-6 rounded-xl shadow-sm border mb-8 backdrop-blur-sm">
-            <h2 class="font-bold text-lg text-blue-900 mb-4">➕ Enroll New Student</h2>
-            <form method="POST" action="{{ route('admin.enrollments.store') }}">
+        <!-- Enrollment Form -->
+        <div class="bg-white/95 p-6 rounded-xl shadow-sm mb-8">
+            <h2 class="text-xl font-semibold text-blue-900 mb-4">Enroll New Student</h2>
+            <form action="{{ route('admin.enrollments.store') }}" method="POST" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 @csrf
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                    {{-- STUDENT --}}
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Select Student</label>
-                        <select name="student_id" required class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-400">
-                            <option value="">-- Choose Student --</option>
-                            @foreach($students as $s)
-                                <option value="{{ $s->id }}">
-                                    {{ $s->student_id }} — {{ $s->last_name }}, {{ $s->first_name }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
 
-                    {{-- CLASS / SUBJECT --}}
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Select Class / Subject</label>
-                        <select name="class_id" id="classSelect" required class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-400">
-                            <option value="">-- Choose Class --</option>
-                            @foreach($classes as $c)
-                                <option value="{{ $c->id }}" 
-                                    data-subject-id="{{ $c->subject_id }}"
-                                    data-faculty-id="{{ $c->faculty_id ?? '' }}" 
-                                    data-faculty-name="{{ $c->faculty ? $c->faculty->first_name.' '.$c->faculty->last_name : '' }}">
-                                    {{ $c->subject->code ?? '' }} — {{ $c->subject->name ?? '' }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    {{-- INSTRUCTOR --}}
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Assign Instructor</label>
-                        <select name="faculty_id" id="facultySelect" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-400">
-                            <option value="">-- Select Subject First --</option>
-                        </select>
-                    </div>
+                <!-- Student -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Student</label>
+                    <select name="student_id" required class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                        <option value="">-- Choose Student --</option>
+                        @foreach($students as $s)
+                            <option value="{{ $s->id }}">
+                                {{ $s->student_id }} — {{ $s->first_name }} {{ $s->last_name }}
+                            </option>
+                        @endforeach
+                    </select>
                 </div>
 
-                <button type="submit" class="bg-blue-900 text-white px-6 py-2.5 rounded-lg font-medium hover:bg-blue-800 transition">
-                    ✅ Enroll Student
-                </button>
+                <!-- Class / Subject -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Class & Subject</label>
+                    <select name="class_id" required id="classSelect" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                        <option value="">-- Choose Class --</option>
+                        @foreach($classes as $c)
+                            <option value="{{ $c->id }}" data-faculty-id="{{ $c->faculty_id }}" data-faculty-name="{{ $c->faculty ? $c->faculty->first_name.' '.$c->faculty->last_name : '' }}">
+                                {{ $c->code }} — {{ optional($c->subject)->name ?? 'Unknown Subject' }}
+                                @if($c->faculty)
+                                    ({{ $c->faculty->first_name }} {{ $c->faculty->last_name }})
+                                @else
+                                    — No Instructor Yet
+                                @endif
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <!-- Faculty / Instructor (Optional) -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        Assign Instructor 
+                        <span class="text-xs text-gray-400">(optional — auto if class has one)</span>
+                    </label>
+                    <select name="faculty_id" id="facultySelect" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                        <option value="">-- Use Class Default --</option>
+                        @foreach($faculties as $f)
+                            <option value="{{ $f->id }}">
+                                {{ $f->first_name }} {{ $f->last_name }}
+                            </option>
+                        @endforeach
+                    </select>
+                    <p id="currentFacultyNote" class="text-sm text-gray-500 mt-1 hidden">
+                        Current class instructor: <span id="facultyName"></span>
+                    </p>
+                </div>
+
+                <div class="md:col-span-2">
+                    <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition">
+                        ✅ Enroll Student
+                    </button>
+                </div>
             </form>
         </div>
 
-        {{-- CURRENT ENROLLMENTS --}}
-        <h2 class="text-lg font-bold text-white mb-4">📝 Enrolled Students</h2>
-        @foreach($classes as $c)
-            @php $enrolled = \App\Models\Enrollment::where('class_id', $c->id)->with('student')->get(); @endphp
-            @if($enrolled->count())
-                <div class="bg-white/95 rounded-xl shadow-sm border mb-4 overflow-hidden backdrop-blur-sm">
-                    <div class="bg-blue-50 px-5 py-3 border-b">
-                        <h3 class="font-bold text-blue-900">
-                            {{ $c->subject->code ?? '' }} — {{ $c->subject->name ?? 'Unknown' }}
-                            <span class="text-sm font-normal text-gray-500 ml-2">
-                                {{ $enrolled->count() }} student(s)
-                            </span>
-                            @if($c->faculty)
-                                <span class="text-sm font-normal text-blue-600 ml-3">
-                                    Instructor: {{ $c->faculty->first_name }} {{ $c->faculty->last_name }}
-                                </span>
-                            @endif
-                        </h3>
-                    </div>
-                    <div class="p-4">
-                        <table class="w-full text-left">
-                            <thead>
-                                <tr class="text-sm text-gray-500">
-                                    <th class="pb-2">Student ID</th>
-                                    <th class="pb-2">Name</th>
-                                    <th class="pb-2 text-right">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($enrolled as $e)
-                                    <tr class="border-t">
-                                        <td class="p-3 font-mono text-sm">{{ $e->student->student_id }}</td>
-                                        <td class="p-3">{{ $e->student->last_name }}, {{ $e->student->first_name }}</td>
-                                        <td class="p-3 text-right">
-                                            <form method="POST" action="{{ route('admin.enrollments.destroy', $e) }}" 
-                                                  onsubmit="return confirm('Remove this student?')">
-                                                @csrf @method('DELETE')
-                                                <button type="submit" class="text-red-600 hover:text-red-800 text-sm">
-                                                    Remove
-                                                </button>
-                                            </form>
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
+        <!-- Enrollment List -->
+        <div class="bg-white/95 p-6 rounded-xl shadow-sm">
+            <h2 class="text-xl font-semibold text-blue-900 mb-4">All Enrollments ({{ $enrollments->count() }})</h2>
+            
+            @if($enrollments->isEmpty())
+                <p class="text-gray-500">No enrollments yet.</p>
+            @else
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead>
+                            <tr class="border-b-2 border-gray-200">
+                                <th class="py-3 px-2">Student</th>
+                                <th class="py-3 px-2">Class / Subject</th>
+                                <th class="py-3 px-2">Instructor</th>
+                                <th class="py-3 px-2">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($enrollments as $e)
+                            <tr class="border-b border-gray-100 hover:bg-gray-50">
+                                <td class="py-3 px-2">
+                                    <div class="font-medium">{{ optional($e->student)->first_name }} {{ optional($e->student)->last_name }}</div>
+                                    <div class="text-sm text-gray-500">{{ optional($e->student)->student_id }}</div>
+                                </td>
+                                <td class="py-3 px-2">
+                                    {{ optional($e->class)->code }} — {{ optional(optional($e->class)->subject)->name ?? 'Unknown' }}
+                                </td>
+                                <td class="py-3 px-2">
+                                    @if(optional($e->class)->faculty)
+                                        {{ optional($e->class)->faculty->first_name }} {{ optional($e->class)->faculty->last_name }}
+                                    @else
+                                        <span class="text-orange-500">Not Assigned</span>
+                                    @endif
+                                </td>
+                                <td class="py-3 px-2">
+                                    <form action="{{ route('admin.enrollments.destroy', $e->id) }}" method="POST" onsubmit="return confirm('Remove this enrollment?')">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="text-red-600 hover:text-red-800 text-sm">Remove</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
                 </div>
             @endif
-        @endforeach
+        </div>
     </div>
 
     <script>
+        // Auto-fill/update instructor info when class is selected
         const classSelect = document.getElementById('classSelect');
         const facultySelect = document.getElementById('facultySelect');
-        const hintText = document.getElementById('hintText');
-
-        // ✅ TAWAGIN LANG — WALANG PHP SA LOOB DITO
-        const allClasses = @json($allClassesData);
+        const facultyNote = document.getElementById('currentFacultyNote');
+        const facultyNameSpan = document.getElementById('facultyName');
 
         classSelect.addEventListener('change', function () {
             const selectedOption = this.options[this.selectedIndex];
-            
-            if (!selectedOption.value) {
-                facultySelect.innerHTML = '<option value="">-- Select Subject First --</option>';
-                facultySelect.disabled = true;
-                return;
-            }
+            const facultyId = selectedOption.dataset.facultyId;
+            const facultyName = selectedOption.dataset.facultyName;
 
-            const subjectId = selectedOption.dataset.subjectId;
-            const assignedFacultyId = selectedOption.dataset.facultyId;
-            const assignedFacultyName = selectedOption.dataset.facultyName;
-
-            const subjectInstructors = [];
-            const seen = new Set();
-            
-            allClasses.forEach(c => {
-                if (c.subject_id == subjectId && c.faculty_id && !seen.has(c.faculty_id)) {
-                    seen.add(c.faculty_id);
-                    subjectInstructors.push({
-                        id: c.faculty_id,
-                        name: c.faculty_name
-                    });
-                }
-            });
-
-            facultySelect.innerHTML = '';
-            facultySelect.disabled = false;
-
-            if (subjectInstructors.length === 0) {
-                facultySelect.innerHTML = '<option value="">-- No instructor assigned --</option>';
-                hintText.textContent = 'Walang nakatalagang instructor sa subject na ito';
-                hintText.className = 'text-xs text-amber-500 mt-1';
-            }
-            else if (subjectInstructors.length === 1) {
-                const inst = subjectInstructors[0];
-                facultySelect.innerHTML = '<option value="' + inst.id + '" selected>' + inst.name + '</option>';
-                facultySelect.disabled = true;
-                hintText.textContent = 'Iisa lang ang nagtuturo sa subject na ito: ' + inst.name;
-                hintText.className = 'text-xs text-green-500 mt-1';
-            }
-            else {
-                facultySelect.innerHTML = '<option value="">-- Choose Instructor --</option>';
-                subjectInstructors.forEach(inst => {
-                    const selected = inst.id == assignedFacultyId ? 'selected' : '';
-                    facultySelect.innerHTML += '<option value="' + inst.id + '" ' + selected + '>' + inst.name + '</option>';
-                });
-                hintText.textContent = assignedFacultyId 
-                    ? 'Maraming instructor — napili: ' + assignedFacultyName 
-                    : 'Maraming instructor ang may hawak ng subject na ito — pakipili';
-                hintText.className = 'text-xs text-blue-500 mt-1';
+            if (facultyId && facultyName) {
+                facultyNameSpan.textContent = facultyName;
+                facultyNote.classList.remove('hidden');
+            } else {
+                facultyNote.classList.add('hidden');
             }
         });
     </script>
