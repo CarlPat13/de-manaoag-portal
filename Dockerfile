@@ -1,6 +1,6 @@
 FROM php:8.2-apache
 
-# Fix MPM conflict — DISABLE event, ENABLE prefork
+# Fix MPM conflict
 RUN a2dismod mpm_event && a2enmod mpm_prefork
 
 # Install dependencies
