@@ -309,7 +309,7 @@ class PortalController extends Controller
     }
 
     // === FACULTY PAGES — SIMPLE & WORKING ===
-    public function facultyDashboard()
+       public function facultyDashboard()
     {
         $user = Auth::user();
         
@@ -319,31 +319,13 @@ class PortalController extends Controller
             return "⚠️ WALANG FACULTY RECORD! User ID: {$user->id}, Email: {$user->email}";
         }
         
-        $classes = ClassModel::where('faculty_id', $faculty->id)
-            ->with(['subject'])
+        // Kunin ang mga klase KASAMA ang subject details
+        $myClasses = ClassModel::where('faculty_id', $faculty->id)
+            ->with('subject') // I-load ang subject para makuha ang code at name
             ->latest()
             ->get();
         
-        // Kung wala pang view file — simpleng display lang
-        if (view()->exists('faculty.dashboard')) {
-            return view('faculty.dashboard', compact('faculty', 'classes'));
-        }
-        
-        // Simpleng output para hindi mag-error
-        $output = "<h1>Welcome, {$faculty->first_name} {$faculty->last_name}!</h1>";
-        $output .= "<p><strong>Faculty ID:</strong> {$faculty->faculty_id}</p>";
-        $output .= "<p><strong>Department:</strong> {$faculty->department}</p>";
-        $output .= "<h3>Your Classes ({$classes->count()})</h3>";
-        $output .= "<ul style='line-height:1.8;'>";
-        foreach ($classes as $class) {
-            $subject = $class->subject;
-            $output .= "<li><strong>{$subject?->code ?? 'N/A'}</strong> - {$subject?->name ?? 'No Subject'}";
-            $output .= " | Schedule: {$class->schedule ?? 'Not Set'}";
-            $output .= " | Room: {$class->room ?? 'Not Assigned'}</li>";
-        }
-        $output .= "</ul>";
-        
-        return $output;
+        return view('faculty.dashboard', compact('faculty', 'myClasses'));
     }
 
     public function classStudents($classId)
