@@ -310,23 +310,29 @@ class PortalController extends Controller
         ]);
     }
 
-    // === FACULTY PAGES ===
-    public function facultyDashboard()
-    {
-        $user = Auth::user();
-        $faculty = Faculty::where('user_id', $user->id)->first();
-        
-        if (!$faculty) {
-            return "⚠️ WALANG FACULTY RECORD! User ID: {$user->id}, Email: {$user->email}";
-        }
-        
+    // === FACULTY PAGES ===public function facultyDashboard()
+{
+    $user = Auth::user();
+    
+    if (!$user || $user->role !== 'faculty') {
+        return redirect()->route('login')->withErrors(['login' => 'Faculty account required.']);
+    }
+    
+    $faculty = Faculty::where('user_id', $user->id)->first();
+    
+    $myClasses = collect([]);
+    if ($faculty) {
         $myClasses = ClassModel::where('faculty_id', $faculty->id)
             ->with('subject')
             ->latest()
             ->get();
-        
-        return view('faculty.dashboard', compact('faculty', 'myClasses'));
     }
+    
+    return view('faculty.dashboard', [
+        'faculty' => $faculty,
+        'myClasses' => $myClasses
+    ])->with('warning', $faculty ? null : 'Your faculty record is not yet linked. Contact admin.');
+}
 
     public function facultySchedule()
     {
