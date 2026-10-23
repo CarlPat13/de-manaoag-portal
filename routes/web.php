@@ -1,4 +1,5 @@
 <?php
+
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PortalController;
 
@@ -29,6 +30,7 @@ Route::middleware('auth')->group(function () {
     // === FACULTY ROUTES ===
     Route::get('/faculty/dashboard', [PortalController::class, 'facultyDashboard'])->name('faculty.dashboard');
     
+    // ✅ INAYOS — kasama na ang enrollments para sa bilang ng estudyante
     Route::get('/faculty/schedule', function () {
         $user = auth()->user();
         if (!$user || !$user->faculty) {
@@ -36,7 +38,10 @@ Route::middleware('auth')->group(function () {
         }
         return view('faculty.schedule', [
             'faculty' => $user->faculty,
-            'myClasses' => \App\Models\ClassModel::where('faculty_id', $user->faculty->id)->with('subject')->get()
+            'myClasses' => \App\Models\ClassModel::where('faculty_id', $user->faculty->id)
+                ->with(['subject', 'enrollments']) // ← Idinagdag ang enrollments
+                ->latest()
+                ->get()
         ]);
     })->name('faculty.schedule');
     
@@ -145,7 +150,7 @@ Route::middleware('auth')->group(function () {
             'enrollments' => \App\Models\Enrollment::with(['student', 'class.faculty'])->latest()->get()
         ]);
     })->name('admin.enrollments');
-
+    
     Route::post('/admin/enrollments', function (\Illuminate\Http\Request $request) {
         if (auth()->user()->role !== 'admin') {
             return redirect()->route('login');
@@ -156,17 +161,17 @@ Route::middleware('auth')->group(function () {
             'class_id'    => 'required|exists:classes,id',
             'faculty_id'  => 'nullable|exists:faculties,id',
         ]);
-
+        
         $class = \App\Models\ClassModel::findOrFail($validated['class_id']);
-
+        
         // Kung may piniling instructor → gamitin iyon; kung wala → gamitin ang nakatalaga sa klase
         $finalFacultyId = $validated['faculty_id'] ?? $class->faculty_id;
-
+        
         // I-enroll ang estudyante
         \App\Models\Enrollment::firstOrCreate(
             ['student_id' => $validated['student_id'], 'class_id' => $validated['class_id']]
         );
-
+        
         // I-update ang instructor ng klase kung kailangan
         if ($finalFacultyId && !$class->faculty_id) {
             $class->update(['faculty_id' => $finalFacultyId]);
@@ -177,10 +182,10 @@ Route::middleware('auth')->group(function () {
         } else {
             $message = 'Student enrolled successfully!';
         }
-
+        
         return redirect()->route('admin.enrollments')->with('success', $message);
     })->name('admin.enrollments.store');
-
+    
     Route::delete('/admin/enrollments/{enrollment}', function (\App\Models\Enrollment $enrollment) {
         if (auth()->user()->role !== 'admin') {
             return redirect()->route('login');
