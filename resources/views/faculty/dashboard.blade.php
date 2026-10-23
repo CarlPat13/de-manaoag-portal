@@ -8,6 +8,9 @@
         body {
             font-family: 'Inter', sans-serif;
             background: linear-gradient(rgba(10, 35, 66, 0.85), rgba(10, 35, 66, 0.90));
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
             min-height: 100vh;
         }
     </style>
@@ -16,54 +19,62 @@
     @include('layouts.nav')
     
     <div class="max-w-7xl mx-auto px-4 py-8">
-        <div class="mb-8">
-            <h1 class="text-3xl font-bold text-white">Welcome, {{ $faculty->first_name }} {{ $faculty->last_name }}! 👋</h1>
-            <p class="text-blue-200 mt-2">Faculty Portal — Manage your classes and students.</p>
+        @if(session('success'))
+            <div class="bg-green-50 border-l-4 border-green-500 text-green-700 p-4 mb-6 rounded-r-lg">
+                ✅ {{ session('success') }}
+            </div>
+        @endif
+
+        <div class="bg-white/95 rounded-xl shadow-lg p-6 mb-8">
+            <h1 class="text-2xl font-bold text-blue-900">Welcome, {{ $faculty->first_name }}! 👋</h1>
+            <p class="text-gray-600 mt-1">Faculty Portal — Manage your classes and students.</p>
         </div>
 
-        <!-- Stats Cards -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div class="bg-white/95 p-5 rounded-xl shadow-sm">
+            <div class="bg-white/95 rounded-xl shadow p-5">
                 <p class="text-sm text-gray-500">Faculty ID</p>
                 <p class="text-xl font-bold text-blue-900 mt-1">{{ $faculty->faculty_id }}</p>
             </div>
-            <div class="bg-white/95 p-5 rounded-xl shadow-sm">
+            <div class="bg-white/95 rounded-xl shadow p-5">
                 <p class="text-sm text-gray-500">Department</p>
-                <p class="text-xl font-bold text-blue-900 mt-1">{{ $faculty->department ?? 'Not Set' }}</p>
+                <p class="text-xl font-bold text-blue-900 mt-1">{{ $faculty->department ?? 'Information Technology' }}</p>
             </div>
-            <div class="bg-white/95 p-5 rounded-xl shadow-sm">
+            <div class="bg-white/95 rounded-xl shadow p-5">
                 <p class="text-sm text-gray-500">Total Classes</p>
                 <p class="text-xl font-bold text-blue-900 mt-1">{{ $myClasses->count() }}</p>
             </div>
         </div>
 
-        <!-- My Classes — Ibalik ang View Students ✅ -->
-        <div>
-            <h2 class="text-xl font-semibold text-white mb-4">📋 My Classes</h2>
+        <div class="bg-white/95 rounded-xl shadow-lg p-6">
+            <h2 class="text-xl font-bold text-blue-900 mb-4">📚 My Classes</h2>
             
-            @if($myClasses->isEmpty())
-                <div class="bg-white/95 p-6 rounded-xl text-gray-500">
-                    No classes assigned yet.
-                </div>
-            @else
+            @if($myClasses->isNotEmpty())
                 <div class="space-y-4">
                     @foreach($myClasses as $class)
-                    <div class="bg-white/95 p-5 rounded-xl shadow-sm">
-                        <h3 class="font-bold text-lg text-blue-900">
-                            {{ $class->subject->code ?? 'N/A' }} - {{ $class->subject->name ?? 'Unknown Subject' }}
-                        </h3>
-                        <p class="text-gray-600 mt-1">
-                            {{ $class->schedule ?? 'Schedule not set' }} • Room {{ $class->room ?? 'Not set' }}
-                        </p>
-                        <div class="mt-3">
-                            <a href="{{ route('faculty.classStudents', ['classId' => $class->id]) }}" 
-                               class="inline-block bg-blue-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-800 transition">
-                                👥 View Students
+                    <div class="border rounded-lg p-4 hover:shadow-md transition">
+                        <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-3">
+                            <div>
+                                <h3 class="font-bold text-lg text-blue-900">
+                                    {{ $class->subject->code ?? 'N/A' }} — {{ $class->subject->name ?? 'Unknown Subject' }}
+                                </h3>
+                                <p class="text-gray-600 text-sm mt-1">
+                                    📅 {{ $class->schedule ?? 'Schedule not set' }} • 
+                                    🏢 Room {{ $class->room ?? 'Not assigned' }}
+                                </p>
+                                <p class="text-gray-500 text-sm mt-1">
+                                    👥 {{ $class->enrollments->count() }} Student(s) Enrolled
+                                </p>
+                            </div>
+                            <a href="{{ route('faculty.class-students', $class->id) }}" 
+                               class="bg-blue-900 text-white px-4 py-2 rounded-lg text-center hover:bg-blue-800 transition whitespace-nowrap">
+                                View Students →
                             </a>
                         </div>
                     </div>
                     @endforeach
                 </div>
+            @else
+                <p class="text-gray-500 text-center py-8">No classes assigned yet.</p>
             @endif
         </div>
     </div>

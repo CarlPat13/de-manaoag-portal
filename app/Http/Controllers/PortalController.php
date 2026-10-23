@@ -317,11 +317,12 @@ class PortalController extends Controller
         $faculty = Faculty::where('user_id', $user->id)->first();
         
         if (!$faculty) {
-            return "⚠️ WALANG FACULTY RECORD! User ID: {$user->id}, Email: {$user->email}";
+            return redirect()->route('login')->withErrors(['login' => 'Faculty account not found.']);
         }
         
+        // ✅ Idinagdag ang enrollments para lumabas ang bilang ng estudyante
         $myClasses = ClassModel::where('faculty_id', $faculty->id)
-            ->with('subject')
+            ->with(['subject', 'enrollments'])
             ->latest()
             ->get();
         
@@ -338,7 +339,7 @@ class PortalController extends Controller
         }
         
         $myClasses = ClassModel::where('faculty_id', $faculty->id)
-            ->with('subject')
+            ->with(['subject', 'enrollments'])
             ->latest()
             ->get();
         
@@ -347,42 +348,24 @@ class PortalController extends Controller
 
     public function classStudents($classId)
     {
-        try {
-            $user = Auth::user();
-            
-            if (!$user || $user->role !== 'faculty') {
-                return redirect()->route('login')->withErrors(['login' => 'Faculty account required.']);
-            }
-            
-            $faculty = Faculty::where('user_id', $user->id)->first();
-            if (!$faculty) {
-                return "⚠️ Faculty record not found.";
-            }
-            
-            $class = ClassModel::where('id', $classId)
-                ->where('faculty_id', $faculty->id)
-                ->with(['enrollments.student'])
-                ->firstOrFail();
-            
-            if (view()->exists('faculty.class-students')) {
-                return view('faculty.class-students', compact('class'));
-            }
-            
-            return "<div style='padding: 2rem; font-family: sans-serif;'>
-                <h2>📋 {$class->subject?->code} - {$class->subject?->name}</h2>
-                <p>Schedule: {$class->schedule} | Room: {$class->room}</p>
-                <h3>Students ({$class->enrollments->count()})</h3>
-                <ol>";
-                foreach ($class->enrollments as $enroll) {
-                    return "<li>{$enroll->student->first_name} {$enroll->student->last_name} — Grade: " . ($enroll->grade ?? 'Pending') . "</li>";
-                }
-                return "</ol>
-                <br><a href='" . route('faculty.dashboard') . "'>← Back</a>
-            </div>";
-            
-        } catch (\Exception $e) {
-            return "🔥 Error: " . $e->getMessage();
+        $user = Auth::user();
+        
+        if (!$user || $user->role !== 'faculty') {
+            return redirect()->route('login')->withErrors(['login' => 'Faculty account required.']);
         }
+        
+        $faculty = Faculty::where('user_id', $user->id)->first();
+        if (!$faculty) {
+            return redirect()->route('login')->withErrors(['login' => 'Faculty record not found.']);
+        }
+        
+        $class = ClassModel::where('id', $classId)
+            ->where('faculty_id', $faculty->id)
+            ->with(['enrollments.student'])
+            ->firstOrFail();
+        
+        // ✅ Diretso na sa view — walang lumalabas na raw text
+        return view('faculty.class-students', compact('class'));
     }
 
     public function storeGrade(Request $request, $enrollmentId)
@@ -402,7 +385,7 @@ class PortalController extends Controller
         
         $faculty = Faculty::where('user_id', $user->id)->first();
         if (!$faculty) {
-            return "⚠️ Faculty record not found.";
+            return redirect()->route('login')->withErrors(['login' => 'Faculty record not found.']);
         }
         
         $enrollment = Enrollment::findOrFail($enrollmentId);
