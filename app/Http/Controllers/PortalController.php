@@ -309,36 +309,30 @@ class PortalController extends Controller
     }
 
     public function facultyDashboard()
-    {
-        $user = Auth::user();
-        
-        if (!$user || $user->role !== 'faculty') {
-            auth()->logout();
-            return redirect()->route('login')->withErrors(['login' => 'Faculty account required.']);
-        }
-        
-        // ✅ Tugma sa DB — walang email, walang employee_id
-        $faculty = Faculty::where('user_id', $user->id)->first();
-        
-        // Wala nang paghahanap sa email kasi wala sa DB mo
-        // Kung wala pa rin — mananatiling null, hindi magka-error
-        if (!$faculty) {
-            $faculty = null;
-        }
-        
-        $classes = collect([]);
-        if ($faculty) {
-            $classes = ClassModel::where('faculty_id', $faculty->id)
-                ->with(['subject', 'enrollments.student'])
-                ->latest()
-                ->get();
-        }
-        
+{
+    $user = Auth::user();
+    
+    if (!$user || $user->role !== 'faculty') {
+        auth()->logout();
+        return redirect()->route('login')->withErrors(['login' => 'Faculty account required.']);
+    }
+    
+    $faculty = Faculty::where('user_id', $user->id)->first();
+    
+    if (!$faculty) {
         return view('faculty.dashboard', [
-            'faculty' => $faculty,
-            'classes' => $classes
+            'faculty' => null,
+            'myClasses' => collect([])
         ]);
     }
+    
+    $myClasses = ClassModel::where('faculty_id', $faculty->id)
+        ->with(['subject', 'enrollments.student'])
+        ->latest()
+        ->get();
+    
+    return view('faculty.dashboard', compact('faculty', 'myClasses'));
+}
 
     public function facultySchedule()
     {
