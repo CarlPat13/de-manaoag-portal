@@ -7,13 +7,22 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-    body {
-        font-family: 'Inter', sans-serif;
-        background: linear-gradient(rgba(10, 35, 66, 0.85), rgba(10, 35, 66, 0.90)), 
-                    url('{{ asset('images/bg-campus.jpg') }}') center/cover no-repeat fixed;
-        min-height: 100vh;
-    }
-</style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(rgba(10, 35, 66, 0.85), rgba(10, 35, 66, 0.90)), 
+                        url('{{ asset('images/bg-campus.jpg') }}') center/cover no-repeat fixed;
+            min-height: 100vh;
+        }
+        select {
+            color: #ffffff !important;
+            background-color: rgba(30, 64, 100, 0.6) !important;
+            border-color: rgba(100, 160, 255, 0.5) !important;
+        }
+        select option {
+            background-color: #0f2744;
+            color: #ffffff;
+        }
+    </style>
 </head>
 <body class="text-white">
     @include('layouts.nav')
@@ -74,7 +83,7 @@
                                 </td>
                                 <td class="px-6 py-3">
                                     <input type="hidden" name="enrollment_ids[]" value="{{ $enroll->id }}">
-                                    <select name="grades[]" class="w-full px-3 py-1.5 rounded-lg bg-white/10 border border-white/20 focus:outline-none focus:border-blue-400">
+                                    <select name="grades[]" class="w-full px-3 py-1.5 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-400">
                                         <option value="" {{ !$enroll->grade ? 'selected' : '' }}>— Select Grade —</option>
                                         <option value="1.0" {{ $enroll->grade == '1.0' ? 'selected' : '' }}>1.0</option>
                                         <option value="1.25" {{ $enroll->grade == '1.25' ? 'selected' : '' }}>1.25</option>
