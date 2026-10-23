@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use App\Models\User;
@@ -103,7 +104,7 @@ class PortalController extends Controller
                 $record = Student::where('student_id', $validated['login'])->first();
                 $notFoundMsg = 'Student ID not found.';
             } elseif ($validated['role'] === 'faculty') {
-                $record = Faculty::where('faculty_id', $validated['login'])->first();
+                $record = Faculty::where('employee_id', $validated['login'])->first();
                 $notFoundMsg = 'Faculty ID not found.';
             } elseif ($validated['role'] === 'admin') {
                 $record = Admin::where('admin_id', $validated['login'])->first();
@@ -322,18 +323,15 @@ class PortalController extends Controller
             }
         }
         
-        $myClasses = collect([]);
+        $classes = collect([]);
         if ($faculty) {
-            $myClasses = ClassModel::where('faculty_id', $faculty->id)
-                ->with('subject')
+            $classes = ClassModel::where('faculty_id', $faculty->id)
+                ->with(['subject', 'enrollments.student'])
                 ->latest()
                 ->get();
         }
         
-        return view('faculty.dashboard', [
-            'faculty' => $faculty,
-            'myClasses' => $myClasses
-        ])->with('warning', $faculty ? null : '⚠️ No faculty record linked. Contact admin.');
+        return view('faculty.dashboard', compact('faculty', 'classes'));
     }
 
     public function facultySchedule()
@@ -346,7 +344,7 @@ class PortalController extends Controller
         }
         
         $myClasses = ClassModel::where('faculty_id', $faculty->id)
-            ->with('subject')
+            ->with(['subject', 'enrollments.student'])
             ->latest()
             ->get();
         

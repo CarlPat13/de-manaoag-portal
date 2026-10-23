@@ -29,7 +29,7 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
             <div class="bg-white/95 p-5 rounded-xl shadow-sm backdrop-blur-sm">
                 <p class="text-sm text-gray-500 mb-1">Faculty ID</p>
-                <p class="text-xl font-bold text-blue-900">{{ $faculty->employee_id ?? 'FAC-00001' }}</p>
+                <p class="text-xl font-bold text-blue-900">{{ $faculty?->employee_id ?? 'FAC-00001' }}</p>
             </div>
             <div class="bg-white/95 p-5 rounded-xl shadow-sm backdrop-blur-sm">
                 <p class="text-sm text-gray-500 mb-1">Department</p>
@@ -55,7 +55,7 @@
                         {{-- CLASS HEADER --}}
                         <div class="bg-blue-50 px-5 py-4 border-b">
                             <h3 class="font-bold text-lg text-blue-900">
-                                {{ $class->code }} — {{ $class->subject->name ?? 'Unknown Subject' }}
+                                {{ $class->code }} — {{ $class->subject?->name ?? 'Unknown Subject' }}
                             </h3>
                             <p class="text-sm text-gray-600 mt-1">
                                 {{ $class->schedule ?? 'Schedule not set' }}
@@ -88,10 +88,10 @@
                                                 @foreach($class->enrollments as $enrollment)
                                                     <tr class="border-b last:border-0">
                                                         <td class="py-3 font-mono">
-                                                            {{ $enrollment->student->student_id ?? 'N/A' }}
+                                                            {{ $enrollment->student?->student_id ?? 'N/A' }}
                                                         </td>
                                                         <td class="py-3">
-                                                            {{ $enrollment->student->last_name ?? '' }}, {{ $enrollment->student->first_name ?? '' }}
+                                                            {{ $enrollment->student?->last_name ?? '' }}, {{ $enrollment->student?->first_name ?? '' }}
                                                         </td>
                                                         <td class="py-3 text-gray-500">
                                                             {{ $enrollment->grade ?? '— Pending' }}
@@ -101,7 +101,7 @@
                                                             <input 
                                                                 type="text" 
                                                                 name="grades[]" 
-                                                                value="{{ old('grades.'.$loop->index, $enrollment->grade) }}"
+                                                                value="{{ $enrollment->grade }}"
                                                                 class="w-20 px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-yellow-400 text-center"
                                                                 placeholder="2">
                                                         </td>
