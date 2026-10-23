@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\Student;
@@ -7,7 +8,7 @@ use App\Models\Admin;
 use App\Models\Announcement;
 use App\Models\ClassModel;
 use App\Models\Enrollment;
-// use App\Rules\Recaptcha; // ✅ Komentuhin muna
+use App\Rules\Recaptcha; // ✅ NABALIK — Recaptcha included
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
@@ -26,13 +27,13 @@ class PortalController extends Controller
             'first_name' => 'required|string|max:50',
             'middle_name' => 'nullable|string|max:50',
             'last_name'  => 'required|string|max:50',
-            'email'       => 'required|email|unique:users,email|max:100',
-            'phone'       => 'nullable|string|digits:11|starts_with:09',
-            'course'      => 'required|string|max:100',
-            'year_level'  => 'required|integer|min:1|max:4',
-            'address'     => 'nullable|string|max:500',
-            'password'    => 'required|string|min:8|confirmed',
-            // 'g-recaptcha-response' => ['required', new Recaptcha], // ✅ Tinanggal muna
+            'email'      => 'required|email|unique:users,email|max:100',
+            'phone'      => 'nullable|string|digits:11|starts_with:09',
+            'course'     => 'required|string|max:100',
+            'year_level' => 'required|integer|min:1|max:4',
+            'address'    => 'nullable|string|max:500',
+            'password'   => 'required|string|min:8|confirmed',
+            'g-recaptcha-response' => ['required', new Recaptcha], // ✅ NABALIK
         ], [
             'year_level.max' => 'Year Level can only be from 1st to 4th Year.',
             'email.unique'   => 'This email is already registered.',
@@ -44,6 +45,7 @@ class PortalController extends Controller
             ? intval($m[1]) + 1
             : 1;
         $studentId = date('Y') . '-' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
+
         $fullName = trim($validated['first_name'] . ' '
             . ($validated['middle_name'] ? $validated['middle_name'].' ' : '')
             . $validated['last_name']);
@@ -84,7 +86,7 @@ class PortalController extends Controller
             'login' => 'required|string',
             'password' => 'required|string',
             'role' => 'required|in:student,faculty,admin',
-            // 'g-recaptcha-response' => ['required', new Recaptcha], // ✅ Tinanggal muna
+            'g-recaptcha-response' => ['required', new Recaptcha], // ✅ NABALIK
         ], [
             'role.required' => 'Please select your role.',
         ]);

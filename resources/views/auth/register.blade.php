@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register - De Manaoag University</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    {{-- <script src="https://www.google.com/recaptcha/api.js" async defer></script> --}}
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
           rel="stylesheet">
     <style>
@@ -303,13 +303,12 @@
                     </div>
                 </div>
 
-                {{-- reCAPTCHA temporarily removed --}}
-                {{-- <div class="mt-4 overflow-x-auto">
+                <div class="mt-4 overflow-x-auto">
                     <div
                         class="g-recaptcha"
-                        data-sitekey="6LeKR_UtAAAAALV3mNQxLtRGCQKnFkqgICTR4jZE">
+                        data-sitekey="6Lcbl_wtAAAAAKQkrZu8ZUUhWCZYT06UrkLL59NQ">
                     </div>
-                </div> --}}
+                </div>
 
                 <!-- REGISTER BUTTON -->
                 <button
