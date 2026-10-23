@@ -26,7 +26,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/change-password', [PortalController::class, 'showChangePassword'])->name('password.change');
     Route::post('/change-password', [PortalController::class, 'updatePassword'])->name('password.update');
     
-    // === FACULTY ROUTES — ORIHINAL, WALANG BAGONG DAGDAG ===
+    // === FACULTY ROUTES — BUMALIK SA DATI ===
     Route::get('/faculty/dashboard', [PortalController::class, 'facultyDashboard'])->name('faculty.dashboard');
     Route::get('/faculty/schedule', [PortalController::class, 'facultySchedule'])->name('faculty.schedule');
     
