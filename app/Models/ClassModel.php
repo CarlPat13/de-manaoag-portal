@@ -28,7 +28,6 @@ class ClassModel extends Model
         return $this->hasMany(Enrollment::class, 'class_id');
     }
 
-    // Ginagamit sa dashboard mo — $c->students->count()
     public function students()
     {
         return $this->hasManyThrough(

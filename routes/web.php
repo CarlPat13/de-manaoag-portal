@@ -1,5 +1,4 @@
 <?php
-
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PortalController;
 
@@ -30,13 +29,28 @@ Route::middleware('auth')->group(function () {
     // === FACULTY ROUTES ===
     Route::get('/faculty/dashboard', [PortalController::class, 'facultyDashboard'])->name('faculty.dashboard');
     Route::get('/faculty/schedule', [PortalController::class, 'facultySchedule'])->name('faculty.schedule');
+    
+    Route::get('/faculty/class/{class}/students', function ($class) {
+        $class = \App\Models\ClassModel::with(['subject', 'enrollments.student'])->findOrFail($class);
+        
+        if (auth()->user()->role !== 'faculty') {
+            return redirect()->route('login');
+        }
+        
+        $faculty = \App\Models\Faculty::where('user_id', auth()->id())->first();
+        if (!$faculty || $class->faculty_id !== $faculty->id) {
+            abort(403, 'Unauthorized');
+        }
+        
+        return view('faculty.class-students', compact('class'));
+    })->name('faculty.classStudents');
+    
     Route::get('/faculty/announcements', function () {
         return view('faculty.announcements', [
             'announcements' => \App\Models\Announcement::latest()->get()
         ]);
     })->name('faculty.announcements');
     
-    // Assign Grades — Tugma sa form action
     Route::post('/faculty/assign-grades', function (\Illuminate\Http\Request $request) {
         if (auth()->user()->role !== 'faculty') {
             return redirect()->route('login');
@@ -54,7 +68,6 @@ Route::middleware('auth')->group(function () {
         foreach ($validated['enrollment_ids'] as $index => $enrollmentId) {
             $enrollment = \App\Models\Enrollment::findOrFail($enrollmentId);
             
-            // I-check kung sa iyo ang klase bago mag-save
             if (!$faculty || !$enrollment->class || $enrollment->class->faculty_id !== $faculty->id) {
                 continue;
             }
@@ -70,9 +83,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/admin/dashboard', [PortalController::class, 'adminDashboard'])->name('admin.dashboard');
     
     Route::get('/admin/users', function () {
-        if (auth()->user()->role !== 'admin') {
-            return redirect()->route('login');
-        }
+        if (auth()->user()->role !== 'admin') return redirect()->route('login');
         return view('admin.users', [
             'students'  => \App\Models\Student::with('user')->latest()->get(),
             'faculties' => \App\Models\Faculty::with('user')->latest()->get(),
@@ -81,52 +92,42 @@ Route::middleware('auth')->group(function () {
     })->name('admin.users');
     
     Route::get('/admin/subjects', function () {
-        if (auth()->user()->role !== 'admin') {
-            return redirect()->route('login');
-        }
+        if (auth()->user()->role !== 'admin') return redirect()->route('login');
         return view('admin.subjects', ['subjects' => \App\Models\Subject::latest()->get()]);
     })->name('admin.subjects');
     
     Route::post('/admin/subjects', function (\Illuminate\Http\Request $request) {
-        if (auth()->user()->role !== 'admin') {
-            return redirect()->route('login');
-        }
+        if (auth()->user()->role !== 'admin') return redirect()->route('login');
         $validated = $request->validate([
-            'code'        => 'required|string|max:50|unique:subjects,code',
-            'name'        => 'required|string|max:255',
-            'units'       => 'required|integer|min:1|max:6',
+            'code' => 'required|string|max:50|unique:subjects,code',
+            'name' => 'required|string|max:255',
+            'units' => 'required|integer|min:1|max:6',
             'description' => 'nullable|string',
         ]);
         \App\Models\Subject::create($validated);
-        return redirect()->route('admin.subjects')->with('success', '✅ Subject added successfully!');
+        return redirect()->route('admin.subjects')->with('success', '✅ Subject added!');
     })->name('admin.subjects.store');
     
     Route::put('/admin/subjects/{subject}', function (\Illuminate\Http\Request $request, \App\Models\Subject $subject) {
-        if (auth()->user()->role !== 'admin') {
-            return redirect()->route('login');
-        }
+        if (auth()->user()->role !== 'admin') return redirect()->route('login');
         $validated = $request->validate([
-            'code'        => 'required|string|max:50|unique:subjects,code,'.$subject->id,
-            'name'        => 'required|string|max:255',
-            'units'       => 'required|integer|min:1|max:6',
+            'code' => 'required|string|max:50|unique:subjects,code,'.$subject->id,
+            'name' => 'required|string|max:255',
+            'units' => 'required|integer|min:1|max:6',
             'description' => 'nullable|string',
         ]);
         $subject->update($validated);
-        return redirect()->route('admin.subjects')->with('success', '✅ Subject updated successfully!');
+        return redirect()->route('admin.subjects')->with('success', '✅ Subject updated!');
     })->name('admin.subjects.update');
     
     Route::delete('/admin/subjects/{subject}', function (\Illuminate\Http\Request $request, \App\Models\Subject $subject) {
-        if (auth()->user()->role !== 'admin') {
-            return redirect()->route('login');
-        }
+        if (auth()->user()->role !== 'admin') return redirect()->route('login');
         $subject->delete();
-        return redirect()->route('admin.subjects')->with('success', '✅ Subject deleted successfully!');
+        return redirect()->route('admin.subjects')->with('success', '✅ Subject deleted!');
     })->name('admin.subjects.destroy');
     
     Route::get('/admin/classes', function () {
-        if (auth()->user()->role !== 'admin') {
-            return redirect()->route('login');
-        }
+        if (auth()->user()->role !== 'admin') return redirect()->route('login');
         return view('admin.classes', [
             'classes'   => \App\Models\ClassModel::with(['subject', 'faculty'])->latest()->get(),
             'subjects'  => \App\Models\Subject::latest()->get(),
@@ -135,26 +136,22 @@ Route::middleware('auth')->group(function () {
     })->name('admin.classes');
     
     Route::post('/admin/classes', function (\Illuminate\Http\Request $request) {
-        if (auth()->user()->role !== 'admin') {
-            return redirect()->route('login');
-        }
+        if (auth()->user()->role !== 'admin') return redirect()->route('login');
         $validated = $request->validate([
-            'code'        => 'required|string|max:50',
-            'subject_id'  => 'required|exists:subjects,id',
-            'faculty_id'  => 'required|exists:faculties,id',
-            'room'        => 'nullable|string|max:100',
-            'schedule'    => 'nullable|string',
-            'year_level'  => 'required|integer|min:1|max:4',
+            'code' => 'required|string|max:50',
+            'subject_id' => 'required|exists:subjects,id',
+            'faculty_id' => 'required|exists:faculties,id',
+            'room' => 'nullable|string|max:100',
+            'schedule' => 'nullable|string',
+            'year_level' => 'required|integer|min:1|max:4',
             'description' => 'nullable|string',
         ]);
         \App\Models\ClassModel::create($validated);
-        return redirect()->route('admin.classes')->with('success', '✅ Class created successfully!');
+        return redirect()->route('admin.classes')->with('success', '✅ Class created!');
     })->name('admin.classes.store');
     
     Route::get('/admin/enrollments', function () {
-        if (auth()->user()->role !== 'admin') {
-            return redirect()->route('login');
-        }
+        if (auth()->user()->role !== 'admin') return redirect()->route('login');
         return view('admin.enrollments', [
             'classes'     => \App\Models\ClassModel::with(['subject', 'faculty'])->latest()->get(),
             'students'    => \App\Models\Student::latest()->get(),
@@ -164,9 +161,7 @@ Route::middleware('auth')->group(function () {
     })->name('admin.enrollments');
     
     Route::post('/admin/enrollments', function (\Illuminate\Http\Request $request) {
-        if (auth()->user()->role !== 'admin') {
-            return redirect()->route('login');
-        }
+        if (auth()->user()->role !== 'admin') return redirect()->route('login');
         $validated = $request->validate([
             'student_id' => 'required|exists:students,id',
             'class_id'   => 'required|exists:classes,id',
@@ -182,79 +177,65 @@ Route::middleware('auth')->group(function () {
         
         if ($finalFacultyId && !$class->faculty_id) {
             $class->update(['faculty_id' => $finalFacultyId]);
-            $message = '✅ Student enrolled & instructor assigned!';
+            $msg = '✅ Student enrolled & instructor assigned!';
         } elseif ($finalFacultyId && $class->faculty_id != $finalFacultyId) {
             $class->update(['faculty_id' => $finalFacultyId]);
-            $message = '✅ Student enrolled & instructor updated!';
+            $msg = '✅ Student enrolled & instructor updated!';
         } else {
-            $message = '✅ Student enrolled successfully!';
+            $msg = '✅ Student enrolled successfully!';
         }
         
-        return redirect()->route('admin.enrollments')->with('success', $message);
+        return redirect()->route('admin.enrollments')->with('success', $msg);
     })->name('admin.enrollments.store');
     
-    Route::delete('/admin/enrollments/{enrollment}', function (\Illuminate\Http\Request $enrollment) {
-        if (auth()->user()->role !== 'admin') {
-            return redirect()->route('login');
-        }
+    Route::delete('/admin/enrollments/{enrollment}', function (\Illuminate\Http\Request $request, $enrollment) {
+        if (auth()->user()->role !== 'admin') return redirect()->route('login');
         $enrollment->delete();
         return redirect()->route('admin.enrollments')->with('success', '✅ Enrollment removed.');
     })->name('admin.enrollments.destroy');
     
     Route::get('/admin/announcements', function () {
-        if (auth()->user()->role !== 'admin') {
-            return redirect()->route('login');
-        }
+        if (auth()->user()->role !== 'admin') return redirect()->route('login');
         return view('admin.announcements', ['announcements' => \App\Models\Announcement::latest()->get()]);
     })->name('admin.announcements');
     
     Route::get('/admin/announcements/create', function () {
-        if (auth()->user()->role !== 'admin') {
-            return redirect()->route('login');
-        }
+        if (auth()->user()->role !== 'admin') return redirect()->route('login');
         return view('admin.announcement-create');
     })->name('admin.announcements.create');
     
     Route::post('/admin/announcements', function (\Illuminate\Http\Request $request) {
-        if (auth()->user()->role !== 'admin') {
-            return redirect()->route('login');
-        }
+        if (auth()->user()->role !== 'admin') return redirect()->route('login');
         $validated = $request->validate([
-            'title'   => 'required|string|max:255',
+            'title' => 'required|string|max:255',
             'content' => 'required|string'
         ]);
         \App\Models\Announcement::create([
-            'title'      => $validated['title'],
-            'content'    => $validated['content'],
-            'admin_id'   => auth()->id()
+            'title' => $validated['title'],
+            'content' => $validated['content'],
+            'admin_id' => auth()->id()
         ]);
-        return redirect()->route('admin.announcements')->with('success', '✅ Announcement posted successfully!');
+        return redirect()->route('admin.announcements')->with('success', '✅ Announcement posted!');
     })->name('admin.announcements.store');
     
     Route::get('/admin/announcements/{announcement}/edit', function (\App\Models\Announcement $announcement) {
-        if (auth()->user()->role !== 'admin') {
-            return redirect()->route('login');
-        }
+        if (auth()->user()->role !== 'admin') return redirect()->route('login');
         return view('admin.announcement-edit', compact('announcement'));
     })->name('admin.announcements.edit');
     
     Route::put('/admin/announcements/{announcement}', function (\Illuminate\Http\Request $request, \App\Models\Announcement $announcement) {
-        if (auth()->user()->role !== 'admin') {
-            return redirect()->route('login');
-        }
+        if (auth()->user()->role !== 'admin') return redirect()->route('login');
         $validated = $request->validate([
-            'title'   => 'required|string|max:255',
+            'title' => 'required|string|max:255',
             'content' => 'required|string'
         ]);
         $announcement->update($validated);
-        return redirect()->route('admin.announcements')->with('success', '✅ Announcement updated successfully!');
+        return redirect()->route('admin.announcements')->with('success', '✅ Announcement updated!');
     })->name('admin.announcements.update');
     
-    Route::delete('/admin/announcements/{announcement}', function (\App\Models\Announcement $announcement) {
-        if (auth()->user()->role !== 'admin') {
-            return redirect()->route('login');
-        }
+    Route::delete('/admin/announcements/{announcement}', function (\Illuminate\Http\Request $request, \App\Models\Announcement $announcement) {
+        if (auth()->user()->role !== 'admin') return redirect()->route('login');
         $announcement->delete();
-        return redirect()->route('admin.announcements')->with('success', '✅ Announcement deleted successfully!');
+        return redirect()->route('admin.announcements')->with('success', '✅ Announcement deleted!');
     })->name('admin.announcements.destroy');
 });
