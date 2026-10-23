@@ -27,26 +27,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/change-password', [PortalController::class, 'showChangePassword'])->name('password.change');
     Route::post('/change-password', [PortalController::class, 'updatePassword'])->name('password.update');
     
-    // === FACULTY ROUTES ===
+    // === FACULTY ROUTES — TINAMA NA ===
     Route::get('/faculty/dashboard', [PortalController::class, 'facultyDashboard'])->name('faculty.dashboard');
-    
-    // ✅ INAYOS — kasama na ang enrollments para sa bilang ng estudyante
-    Route::get('/faculty/schedule', function () {
-        $user = auth()->user();
-        if (!$user || !$user->faculty) {
-            return redirect()->route('login')->withErrors(['login' => 'Faculty account not found.']);
-        }
-        return view('faculty.schedule', [
-            'faculty' => $user->faculty,
-            'myClasses' => \App\Models\ClassModel::where('faculty_id', $user->faculty->id)
-                ->with(['subject', 'enrollments']) // ← Idinagdag ang enrollments
-                ->latest()
-                ->get()
-        ]);
-    })->name('faculty.schedule');
-    
+    Route::get('/faculty/schedule', [PortalController::class, 'facultySchedule'])->name('faculty.schedule');
     Route::get('/faculty/class/{classId}/students', [PortalController::class, 'classStudents'])->name('faculty.classStudents');
-    Route::post('/faculty/enrollment/{enrollmentId}/grade', [PortalController::class, 'storeGrade'])->name('faculty.storeGrade');
+    Route::post('/faculty/enrollment/{enrollmentId}/grade', [PortalController::class, 'storeGrade'])->name('faculty.store-grade');
     
     Route::get('/faculty/announcements', function () {
         return view('faculty.announcements', [
@@ -117,7 +102,7 @@ Route::middleware('auth')->group(function () {
             return redirect()->route('login');
         }
         return view('admin.classes', [
-            'classes' => \App\Models\ClassModel::with(['subject', 'faculty', 'students'])->latest()->get()
+            'classes' => \App\Models\ClassModel::with(['subject', 'faculty', 'enrollments'])->latest()->get()
         ]);
     })->name('admin.classes');
     
@@ -138,7 +123,7 @@ Route::middleware('auth')->group(function () {
         return redirect()->route('admin.classes')->with('success', 'Class created successfully!');
     })->name('admin.classes.store');
     
-    // ✅ ENROLLMENTS — Updated with optional instructor assignment
+    // ENROLLMENTS
     Route::get('/admin/enrollments', function () {
         if (auth()->user()->role !== 'admin') {
             return redirect()->route('login');
@@ -155,24 +140,16 @@ Route::middleware('auth')->group(function () {
         if (auth()->user()->role !== 'admin') {
             return redirect()->route('login');
         }
-        
         $validated = $request->validate([
             'student_id'  => 'required|exists:students,id',
             'class_id'    => 'required|exists:classes,id',
             'faculty_id'  => 'nullable|exists:faculties,id',
         ]);
-        
         $class = \App\Models\ClassModel::findOrFail($validated['class_id']);
-        
-        // Kung may piniling instructor → gamitin iyon; kung wala → gamitin ang nakatalaga sa klase
         $finalFacultyId = $validated['faculty_id'] ?? $class->faculty_id;
-        
-        // I-enroll ang estudyante
         \App\Models\Enrollment::firstOrCreate(
             ['student_id' => $validated['student_id'], 'class_id' => $validated['class_id']]
         );
-        
-        // I-update ang instructor ng klase kung kailangan
         if ($finalFacultyId && !$class->faculty_id) {
             $class->update(['faculty_id' => $finalFacultyId]);
             $message = 'Student enrolled & instructor assigned!';
@@ -182,7 +159,6 @@ Route::middleware('auth')->group(function () {
         } else {
             $message = 'Student enrolled successfully!';
         }
-        
         return redirect()->route('admin.enrollments')->with('success', $message);
     })->name('admin.enrollments.store');
     
@@ -194,7 +170,7 @@ Route::middleware('auth')->group(function () {
         return redirect()->route('admin.enrollments')->with('success', 'Enrollment removed.');
     })->name('admin.enrollments.destroy');
     
-    // ADMIN ANNOUNCEMENTS — Full CRUD
+    // ADMIN ANNOUNCEMENTS
     Route::get('/admin/announcements', function () {
         if (auth()->user()->role !== 'admin') {
             return redirect()->route('login');
@@ -218,9 +194,9 @@ Route::middleware('auth')->group(function () {
             'content' => 'required|string'
         ]);
         \App\Models\Announcement::create([
-            'title'       => $validated['title'],
-            'content'     => $validated['content'],
-            'admin_id'    => auth()->id()
+            'title'     => $validated['title'],
+            'content'   => $validated['content'],
+            'admin_id'  => auth()->id()
         ]);
         return redirect()->route('admin.announcements')->with('success', 'Announcement posted successfully!');
     })->name('admin.announcements.store');

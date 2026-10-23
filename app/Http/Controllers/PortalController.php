@@ -314,7 +314,6 @@ class PortalController extends Controller
     public function facultyDashboard()
     {
         $user = Auth::user();
-        
         $faculty = Faculty::where('user_id', $user->id)->first();
         
         if (!$faculty) {
@@ -332,14 +331,12 @@ class PortalController extends Controller
     public function facultySchedule()
     {
         $user = Auth::user();
-        
         $faculty = Faculty::where('user_id', $user->id)->first();
         
         if (!$faculty) {
-            return "⚠️ Faculty record not found.";
+            return redirect()->route('login')->withErrors(['login' => 'Faculty account not found.']);
         }
         
-        // ✅ Idinagdag ang enrollments para sa bilang ng estudyante
         $myClasses = ClassModel::where('faculty_id', $faculty->id)
             ->with(['subject', 'enrollments'])
             ->latest()
@@ -367,20 +364,8 @@ class PortalController extends Controller
                 ->with(['enrollments.student'])
                 ->firstOrFail();
             
-            if (view()->exists('faculty.class-students')) {
-                return view('faculty.class-students', compact('class'));
-            }
-            
-            $output = "<h3>Class: {$class->subject?->code} - {$class->subject?->name}</h3>";
-            $output .= "<p>Schedule: {$class->schedule} | Room: {$class->room}</p>";
-            $output .= "<h4>Students ({$class->enrollments->count()})</h4><ol>";
-            foreach ($class->enrollments as $enroll) {
-                $student = $enroll->student;
-                $output .= "<li>{$student->first_name} {$student->last_name} ({$student->student_id})";
-                $output .= " — Grade: " . ($enroll->grade ?? 'Pending') . "</li>";
-            }
-            $output .= "</ol>";
-            return $output;
+            // ✅ Diretsong view na — walang fallback HTML para hindi mag-error
+            return view('faculty.class-students', compact('class'));
             
         } catch (\Exception $e) {
             return "🔥 Error: " . $e->getMessage();
