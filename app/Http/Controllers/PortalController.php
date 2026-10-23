@@ -68,7 +68,7 @@ class PortalController extends Controller
         ]);
 
         return redirect()->route('login')
-            ->with('success', "Registration successful! Your Student ID: {$studentId}. Please login below.");
+            ->with('success', "Registration successful! Your Student ID: {$studentId}. Please login.");
     }
 
     public function showLogin()
@@ -121,7 +121,7 @@ class PortalController extends Controller
             ];
         }
 
-        if (Auth::attempt($credentials)) {
+        if (Auth::attempt($credentials, $request->remember)) {
             $request->session()->regenerate();
             
             $route = match(Auth::user()->role) {
@@ -242,7 +242,7 @@ class PortalController extends Controller
 
         return view('portal.schedule', [
             'student' => $student,
-            'schedules' => $enrollments
+            'enrollments' => $enrollments
         ]);
     }
 
@@ -308,11 +308,23 @@ class PortalController extends Controller
         ]);
     }
 
-    // === FACULTY PAGES — SIMPLE TEST FIRST ===
+    // === FACULTY PAGES ===
     public function facultyDashboard()
     {
-        // Simpleng pagsubok — walang database
-        return "✅ Gumagana na ang Faculty Dashboard!";
+        $user = Auth::user();
+        
+        $faculty = Faculty::where('user_id', $user->id)->first();
+        
+        if (!$faculty) {
+            return "⚠️ No Faculty record found for this account. Please contact Admin.";
+        }
+        
+        $classes = ClassModel::where('faculty_id', $faculty->id)
+            ->with(['subject'])
+            ->latest()
+            ->get();
+        
+        return view('faculty.dashboard', compact('faculty', 'classes'));
     }
 
     public function classStudents($classId)
@@ -321,7 +333,7 @@ class PortalController extends Controller
             $user = Auth::user();
             
             if (!$user || $user->role !== 'faculty') {
-                return redirect()->route('login')->withErrors(['login' => 'Faculty account not found.']);
+                return redirect()->route('login')->withErrors(['login' => 'Faculty account required.']);
             }
             
             $faculty = Faculty::where('user_id', $user->id)->first();
@@ -331,12 +343,13 @@ class PortalController extends Controller
             
             $class = ClassModel::where('id', $classId)
                 ->where('faculty_id', $faculty->id)
+                ->with(['enrollments.student'])
                 ->firstOrFail();
             
-            return view('faculty.students', compact('class'));
+            return view('faculty.class-students', compact('class'));
             
         } catch (\Exception $e) {
-            return "🔥 ERROR: " . $e->getMessage() . " sa linya " . $e->getLine();
+            return "🔥 Error: " . $e->getMessage();
         }
     }
 
@@ -385,7 +398,7 @@ class PortalController extends Controller
             
             if (!$user || $user->role !== 'admin') {
                 auth()->logout();
-                return redirect()->route('login')->withErrors(['login' => 'Admin account not found.']);
+                return redirect()->route('login')->withErrors(['login' => 'Admin account required.']);
             }
             
             $admin = Admin::where('user_id', $user->id)->first();
@@ -403,7 +416,7 @@ class PortalController extends Controller
             ]);
             
         } catch (\Exception $e) {
-            return "🔥 ERROR: " . $e->getMessage() . " sa linya " . $e->getLine();
+            return "🔥 Error: " . $e->getMessage();
         }
     }
 }
