@@ -27,7 +27,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/change-password', [PortalController::class, 'showChangePassword'])->name('password.change');
     Route::post('/change-password', [PortalController::class, 'updatePassword'])->name('password.update');
     
-    // Faculty Routes
+    // === FACULTY ROUTES ===
     Route::get('/faculty/dashboard', [PortalController::class, 'facultyDashboard'])->name('faculty.dashboard');
     Route::get('/faculty/schedule', [PortalController::class, 'facultySchedule'])->name('faculty.schedule');
     Route::get('/faculty/announcements', function () {
@@ -36,7 +36,7 @@ Route::middleware('auth')->group(function () {
         ]);
     })->name('faculty.announcements');
     
-    // Faculty Assign Grades Route
+    // ⚠️ SIGURADUHIN: Pangalan ay 'faculty.assignGrades' — TUGMA SA BLADE
     Route::post('/faculty/assign-grades', function (\Illuminate\Http\Request $request) {
         if (auth()->user()->role !== 'faculty') {
             return redirect()->route('login');
@@ -54,8 +54,8 @@ Route::middleware('auth')->group(function () {
         foreach ($validated['enrollment_ids'] as $index => $enrollmentId) {
             $enrollment = \App\Models\Enrollment::findOrFail($enrollmentId);
             
-            // Siguraduhin na sa kanya ang klase bago maglagay ng grado
-            if (!$enrollment->class || $enrollment->class->faculty_id !== optional($faculty)->id) {
+            // Ligtas na suriin kahit wala ang klase o faculty
+            if (!$faculty || !$enrollment->class || $enrollment->class->faculty_id !== $faculty->id) {
                 continue;
             }
             
@@ -64,7 +64,7 @@ Route::middleware('auth')->group(function () {
         }
 
         return back()->with('success', '✅ Grades saved successfully!');
-    })->name('faculty.assignGrades');
+    })->name('faculty.assignGrades'); // ← DAPAT EKSKAT ITO
     
     // Admin Routes
     Route::get('/admin/dashboard', [PortalController::class, 'adminDashboard'])->name('admin.dashboard');
@@ -91,14 +91,12 @@ Route::middleware('auth')->group(function () {
         if (auth()->user()->role !== 'admin') {
             return redirect()->route('login');
         }
-        
         $validated = $request->validate([
             'code'        => 'required|string|max:50|unique:subjects,code',
             'name'        => 'required|string|max:255',
             'units'       => 'required|integer|min:1|max:6',
             'description' => 'nullable|string',
         ]);
-        
         \App\Models\Subject::create($validated);
         return redirect()->route('admin.subjects')->with('success', '✅ Subject added successfully!');
     })->name('admin.subjects.store');
@@ -107,14 +105,12 @@ Route::middleware('auth')->group(function () {
         if (auth()->user()->role !== 'admin') {
             return redirect()->route('login');
         }
-        
         $validated = $request->validate([
             'code'        => 'required|string|max:50|unique:subjects,code,'.$subject->id,
             'name'        => 'required|string|max:255',
             'units'       => 'required|integer|min:1|max:6',
             'description' => 'nullable|string',
         ]);
-        
         $subject->update($validated);
         return redirect()->route('admin.subjects')->with('success', '✅ Subject updated successfully!');
     })->name('admin.subjects.update');
@@ -142,7 +138,6 @@ Route::middleware('auth')->group(function () {
         if (auth()->user()->role !== 'admin') {
             return redirect()->route('login');
         }
-        
         $validated = $request->validate([
             'code'        => 'required|string|max:50',
             'subject_id'  => 'required|exists:subjects,id',
@@ -152,7 +147,6 @@ Route::middleware('auth')->group(function () {
             'year_level'  => 'required|integer|min:1|max:4',
             'description' => 'nullable|string',
         ]);
-        
         \App\Models\ClassModel::create($validated);
         return redirect()->route('admin.classes')->with('success', '✅ Class created successfully!');
     })->name('admin.classes.store');
@@ -173,13 +167,11 @@ Route::middleware('auth')->group(function () {
         if (auth()->user()->role !== 'admin') {
             return redirect()->route('login');
         }
-        
         $validated = $request->validate([
             'student_id' => 'required|exists:students,id',
             'class_id'   => 'required|exists:classes,id',
             'faculty_id' => 'nullable|exists:faculties,id',
         ]);
-        
         $class = \App\Models\ClassModel::findOrFail($validated['class_id']);
         $finalFacultyId = $validated['faculty_id'] ?? $class->faculty_id;
         
@@ -226,18 +218,15 @@ Route::middleware('auth')->group(function () {
         if (auth()->user()->role !== 'admin') {
             return redirect()->route('login');
         }
-        
         $validated = $request->validate([
             'title'   => 'required|string|max:255',
             'content' => 'required|string'
         ]);
-        
         \App\Models\Announcement::create([
             'title'      => $validated['title'],
             'content'    => $validated['content'],
             'admin_id'   => auth()->id()
         ]);
-        
         return redirect()->route('admin.announcements')->with('success', '✅ Announcement posted successfully!');
     })->name('admin.announcements.store');
     
@@ -252,12 +241,10 @@ Route::middleware('auth')->group(function () {
         if (auth()->user()->role !== 'admin') {
             return redirect()->route('login');
         }
-        
         $validated = $request->validate([
             'title'   => 'required|string|max:255',
             'content' => 'required|string'
         ]);
-        
         $announcement->update($validated);
         return redirect()->route('admin.announcements')->with('success', '✅ Announcement updated successfully!');
     })->name('admin.announcements.update');
