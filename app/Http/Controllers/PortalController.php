@@ -104,7 +104,6 @@ class PortalController extends Controller
                 $record = Student::where('student_id', $validated['login'])->first();
                 $notFoundMsg = 'Student ID not found.';
             } elseif ($validated['role'] === 'faculty') {
-                // ✅ TAMA: gamitin ang faculty_id — yan ang nasa DB mo
                 $record = Faculty::where('faculty_id', $validated['login'])->first();
                 $notFoundMsg = 'Faculty ID not found.';
             } elseif ($validated['role'] === 'admin') {
@@ -309,30 +308,30 @@ class PortalController extends Controller
     }
 
     public function facultyDashboard()
-{
-    $user = Auth::user();
-    
-    if (!$user || $user->role !== 'faculty') {
-        auth()->logout();
-        return redirect()->route('login')->withErrors(['login' => 'Faculty account required.']);
+    {
+        $user = Auth::user();
+        
+        if (!$user || $user->role !== 'faculty') {
+            auth()->logout();
+            return redirect()->route('login')->withErrors(['login' => 'Faculty account required.']);
+        }
+        
+        $faculty = Faculty::where('user_id', $user->id)->first();
+        
+        if (!$faculty) {
+            return view('faculty.dashboard', [
+                'faculty' => null,
+                'myClasses' => collect([])
+            ]);
+        }
+        
+        $myClasses = ClassModel::where('faculty_id', $faculty->id)
+            ->with(['subject', 'enrollments.student'])
+            ->latest()
+            ->get();
+        
+        return view('faculty.dashboard', compact('faculty', 'myClasses'));
     }
-    
-    $faculty = Faculty::where('user_id', $user->id)->first();
-    
-    if (!$faculty) {
-        return view('faculty.dashboard', [
-            'faculty' => null,
-            'myClasses' => collect([])
-        ]);
-    }
-    
-    $myClasses = ClassModel::where('faculty_id', $faculty->id)
-        ->with(['subject', 'enrollments.student'])
-        ->latest()
-        ->get();
-    
-    return view('faculty.dashboard', compact('faculty', 'myClasses'));
-}
 
     public function facultySchedule()
     {

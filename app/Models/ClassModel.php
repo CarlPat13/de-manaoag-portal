@@ -13,11 +13,22 @@ class ClassModel extends Model
         'code', 'subject_id', 'faculty_id', 'room', 'schedule', 'year_level', 'description'
     ];
 
-    public function subject() { return $this->belongsTo(Subject::class); }
-    public function faculty() { return $this->belongsTo(Faculty::class); }
-    public function enrollments() { return $this->hasMany(Enrollment::class, 'class_id'); }
-    
-    // Ginagamit sa dashboard mo: $c->students->count()
+    public function subject()
+    {
+        return $this->belongsTo(Subject::class);
+    }
+
+    public function faculty()
+    {
+        return $this->belongsTo(Faculty::class);
+    }
+
+    public function enrollments()
+    {
+        return $this->hasMany(Enrollment::class, 'class_id');
+    }
+
+    // Ginagamit sa dashboard mo — $c->students->count()
     public function students()
     {
         return $this->hasManyThrough(
