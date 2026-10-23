@@ -2,7 +2,6 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PortalController;
 
-// === PUBLIC ROUTES ===
 Route::get('/', function () {
     return redirect()->route('login');
 });
@@ -10,11 +9,9 @@ Route::get('/register', [PortalController::class, 'showRegistration'])->name('re
 Route::post('/register', [PortalController::class, 'register']);
 Route::get('/login', [PortalController::class, 'showLogin'])->name('login');
 Route::post('/login', [PortalController::class, 'login']);
-Route::post('/logout', [PortalController::class, 'logout'])->name('logout');
+Route::post('/logout', [PortalController::class, 'logout']);
 
-// === PROTECTED ROUTES ===
 Route::middleware('auth')->group(function () {
-    // === STUDENT ROUTES ===
     Route::get('/dashboard', [PortalController::class, 'dashboard'])->name('dashboard');
     Route::get('/profile', [PortalController::class, 'profile'])->name('profile');
     Route::get('/schedule', [PortalController::class, 'schedule'])->name('schedule');
@@ -22,21 +19,17 @@ Route::middleware('auth')->group(function () {
     Route::get('/subjects', [PortalController::class, 'subjects'])->name('subjects');
     Route::get('/announcements', [PortalController::class, 'announcements'])->name('announcements');
     
-    // CHANGE PASSWORD
     Route::get('/change-password', [PortalController::class, 'showChangePassword'])->name('password.change');
     Route::post('/change-password', [PortalController::class, 'updatePassword'])->name('password.update');
     
-    // === FACULTY ROUTES — BUMALIK SA DATI ===
     Route::get('/faculty/dashboard', [PortalController::class, 'facultyDashboard'])->name('faculty.dashboard');
     Route::get('/faculty/schedule', [PortalController::class, 'facultySchedule'])->name('faculty.schedule');
-    
     Route::get('/faculty/announcements', function () {
         return view('faculty.announcements', [
             'announcements' => \App\Models\Announcement::latest()->get()
         ]);
     })->name('faculty.announcements');
     
-    // === ADMIN ROUTES ===
     Route::get('/admin/dashboard', [PortalController::class, 'adminDashboard'])->name('admin.dashboard');
     
     Route::get('/admin/users', function () {
@@ -50,7 +43,6 @@ Route::middleware('auth')->group(function () {
         ]);
     })->name('admin.users');
     
-    // SUBJECTS — FULL CRUD
     Route::get('/admin/subjects', function () {
         if (auth()->user()->role !== 'admin') {
             return redirect()->route('login');
@@ -120,7 +112,6 @@ Route::middleware('auth')->group(function () {
         return redirect()->route('admin.classes')->with('success', 'Class created successfully!');
     })->name('admin.classes.store');
     
-    // ENROLLMENTS
     Route::get('/admin/enrollments', function () {
         if (auth()->user()->role !== 'admin') {
             return redirect()->route('login');
@@ -167,7 +158,6 @@ Route::middleware('auth')->group(function () {
         return redirect()->route('admin.enrollments')->with('success', 'Enrollment removed.');
     })->name('admin.enrollments.destroy');
     
-    // ADMIN ANNOUNCEMENTS
     Route::get('/admin/announcements', function () {
         if (auth()->user()->role !== 'admin') {
             return redirect()->route('login');
