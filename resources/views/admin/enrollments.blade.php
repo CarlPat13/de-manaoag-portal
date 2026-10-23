@@ -26,7 +26,7 @@
             </div>
         @endif
 
-        {{-- ✅ DATA PROCESSING — NASA LABAS NG SCRIPT --}}
+        {{-- DATA PROCESSING --}}
         @php
             $allClassesData = $classes->map(function($c) {
                 return [
@@ -78,7 +78,6 @@
                         <select name="faculty_id" id="facultySelect" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-400">
                             <option value="">-- Select Subject First --</option>
                         </select>
-                        <p id="hintText" class="mt-1 text-xs"></p>
                     </div>
                 </div>
                 <button type="submit" class="bg-blue-900 text-white px-6 py-2.5 rounded-lg font-medium hover:bg-blue-800 transition">
@@ -142,9 +141,7 @@
     <script>
         const classSelect = document.getElementById('classSelect');
         const facultySelect = document.getElementById('facultySelect');
-        const hintText = document.getElementById('hintText');
 
-        // ✅ TAWAGIN LANG — WALANG PHP SA LOOB DITO
         const allClasses = @json($allClassesData);
 
         classSelect.addEventListener('change', function () {
@@ -153,13 +150,11 @@
             if (!selectedOption.value) {
                 facultySelect.innerHTML = '<option value="">-- Select Subject First --</option>';
                 facultySelect.disabled = true;
-                hintText.textContent = '';
                 return;
             }
 
             const subjectId = selectedOption.dataset.subjectId;
             const assignedFacultyId = selectedOption.dataset.facultyId;
-            const assignedFacultyName = selectedOption.dataset.facultyName;
 
             const subjectInstructors = [];
             const seen = new Set();
@@ -179,15 +174,11 @@
 
             if (subjectInstructors.length === 0) {
                 facultySelect.innerHTML = '<option value="">-- No instructor assigned --</option>';
-                hintText.textContent = 'Walang nakatalagang instructor sa subject na ito';
-                hintText.className = 'text-xs text-amber-500 mt-1';
             }
             else if (subjectInstructors.length === 1) {
                 const inst = subjectInstructors[0];
                 facultySelect.innerHTML = '<option value="' + inst.id + '" selected>' + inst.name + '</option>';
                 facultySelect.disabled = true;
-                hintText.textContent = 'Iisa lang ang nagtuturo sa subject na ito: ' + inst.name;
-                hintText.className = 'text-xs text-green-500 mt-1';
             }
             else {
                 facultySelect.innerHTML = '<option value="">-- Choose Instructor --</option>';
@@ -195,10 +186,6 @@
                     const selected = inst.id == assignedFacultyId ? 'selected' : '';
                     facultySelect.innerHTML += '<option value="' + inst.id + '" ' + selected + '>' + inst.name + '</option>';
                 });
-                hintText.textContent = assignedFacultyId 
-                    ? 'Maraming instructor — napili: ' + assignedFacultyName 
-                    : 'Maraming instructor ang may hawak ng subject na ito — pakipili';
-                hintText.className = 'text-xs text-blue-500 mt-1';
             }
         });
     </script>

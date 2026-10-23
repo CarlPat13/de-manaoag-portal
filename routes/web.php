@@ -1,7 +1,9 @@
 <?php
+
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PortalController;
 
+// === PUBLIC ROUTES ===
 Route::get('/', function () {
     return redirect()->route('login');
 });
@@ -11,7 +13,9 @@ Route::get('/login', [PortalController::class, 'showLogin'])->name('login');
 Route::post('/login', [PortalController::class, 'login']);
 Route::post('/logout', [PortalController::class, 'logout'])->name('logout');
 
+// === PROTECTED ROUTES ===
 Route::middleware('auth')->group(function () {
+    // Student & Common Routes
     Route::get('/dashboard', [PortalController::class, 'dashboard'])->name('dashboard');
     Route::get('/profile', [PortalController::class, 'profile'])->name('profile');
     Route::get('/schedule', [PortalController::class, 'schedule'])->name('schedule');
@@ -22,6 +26,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/change-password', [PortalController::class, 'showChangePassword'])->name('password.change');
     Route::post('/change-password', [PortalController::class, 'updatePassword'])->name('password.update');
     
+    // Faculty Routes
     Route::get('/faculty/dashboard', [PortalController::class, 'facultyDashboard'])->name('faculty.dashboard');
     Route::get('/faculty/schedule', [PortalController::class, 'facultySchedule'])->name('faculty.schedule');
     Route::get('/faculty/announcements', function () {
@@ -30,6 +35,7 @@ Route::middleware('auth')->group(function () {
         ]);
     })->name('faculty.announcements');
     
+    // Admin Routes
     Route::get('/admin/dashboard', [PortalController::class, 'adminDashboard'])->name('admin.dashboard');
     
     Route::get('/admin/users', function () {
@@ -86,12 +92,15 @@ Route::middleware('auth')->group(function () {
         return redirect()->route('admin.subjects')->with('success', 'Subject deleted successfully!');
     })->name('admin.subjects.destroy');
     
+    // ✅ FIXED: Added missing $subjects & $faculties for Manage Classes
     Route::get('/admin/classes', function () {
         if (auth()->user()->role !== 'admin') {
             return redirect()->route('login');
         }
         return view('admin.classes', [
-            'classes' => \App\Models\ClassModel::with(['subject', 'faculty', 'enrollments'])->latest()->get()
+            'classes'   => \App\Models\ClassModel::with(['subject', 'faculty', 'enrollments'])->latest()->get(),
+            'subjects'  => \App\Models\Subject::latest()->get(),
+            'faculties' => \App\Models\Faculty::latest()->get()
         ]);
     })->name('admin.classes');
     
