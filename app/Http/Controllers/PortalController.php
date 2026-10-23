@@ -310,17 +310,25 @@ class PortalController extends Controller
         ]);
     }
 
-    // === FACULTY PAGES ===
+    // === FACULTY PAGES — ✅ AYOS NA, HINDI MAGKA-CRASH ===
     public function facultyDashboard()
     {
         $user = Auth::user();
-        $faculty = Faculty::where('user_id', $user->id)->first();
         
-        if (!$faculty) {
-            return redirect()->route('login')->withErrors(['login' => 'Faculty account not found.']);
+        if (!$user || $user->role !== 'faculty') {
+            return redirect()->route('login')->withErrors(['login' => 'Faculty account required.']);
         }
         
-        // ✅ Idinagdag ang enrollments para lumabas ang bilang ng estudyante
+        $faculty = Faculty::where('user_id', $user->id)->first();
+        
+        // ✅ KUNG WALANG RECORD — HUWAG MAG-CRASH, IPakita LANG WALANG LAMAN
+        if (!$faculty) {
+            return view('faculty.dashboard', [
+                'faculty' => null,
+                'myClasses' => collect([])
+            ])->with('warning', 'Your faculty record is not yet linked. Please contact admin.');
+        }
+        
         $myClasses = ClassModel::where('faculty_id', $faculty->id)
             ->with(['subject', 'enrollments'])
             ->latest()
@@ -332,10 +340,18 @@ class PortalController extends Controller
     public function facultySchedule()
     {
         $user = Auth::user();
+        
+        if (!$user || $user->role !== 'faculty') {
+            return redirect()->route('login')->withErrors(['login' => 'Faculty account required.']);
+        }
+        
         $faculty = Faculty::where('user_id', $user->id)->first();
         
         if (!$faculty) {
-            return redirect()->route('login')->withErrors(['login' => 'Faculty account not found.']);
+            return view('faculty.schedule', [
+                'faculty' => null,
+                'myClasses' => collect([])
+            ])->with('warning', 'Your faculty record is not yet linked. Please contact admin.');
         }
         
         $myClasses = ClassModel::where('faculty_id', $faculty->id)
@@ -364,7 +380,6 @@ class PortalController extends Controller
             ->with(['enrollments.student'])
             ->firstOrFail();
         
-        // ✅ Diretso na sa view — walang lumalabas na raw text
         return view('faculty.class-students', compact('class'));
     }
 
