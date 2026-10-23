@@ -25,11 +25,11 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
             <div class="bg-white/95 p-5 rounded-xl shadow-sm">
                 <p class="text-sm text-gray-500 mb-1">Faculty ID</p>
-                <p class="text-xl font-bold text-blue-900">{{ $faculty ? $faculty->employee_id : 'N/A' }}</p>
+                <p class="text-xl font-bold text-blue-900">{{ $faculty ? $faculty->faculty_id : 'N/A' }}</p>
             </div>
             <div class="bg-white/95 p-5 rounded-xl shadow-sm">
                 <p class="text-sm text-gray-500 mb-1">Department</p>
-                <p class="text-xl font-bold text-blue-900">Information Technology</p>
+                <p class="text-xl font-bold text-blue-900">{{ $faculty ? $faculty->department : 'N/A' }}</p>
             </div>
             <div class="bg-white/95 p-5 rounded-xl shadow-sm">
                 <p class="text-sm text-gray-500 mb-1">Total Classes</p>

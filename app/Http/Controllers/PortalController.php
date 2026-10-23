@@ -1,5 +1,7 @@
 <?php
+
 namespace App\Http\Controllers;
+
 use App\Models\User;
 use App\Models\Student;
 use App\Models\Faculty;
@@ -102,7 +104,8 @@ class PortalController extends Controller
                 $record = Student::where('student_id', $validated['login'])->first();
                 $notFoundMsg = 'Student ID not found.';
             } elseif ($validated['role'] === 'faculty') {
-                $record = Faculty::where('employee_id', $validated['login'])->first();
+                // ✅ TAMA: gamitin ang faculty_id — yan ang nasa DB mo
+                $record = Faculty::where('faculty_id', $validated['login'])->first();
                 $notFoundMsg = 'Faculty ID not found.';
             } elseif ($validated['role'] === 'admin') {
                 $record = Admin::where('admin_id', $validated['login'])->first();
@@ -314,25 +317,15 @@ class PortalController extends Controller
             return redirect()->route('login')->withErrors(['login' => 'Faculty account required.']);
         }
         
-        // LIGTAS NA PAGKUHA — walang error kahit wala pang record
+        // ✅ Tugma sa DB — walang email, walang employee_id
         $faculty = Faculty::where('user_id', $user->id)->first();
         
-        // Kung wala sa user_id, subukan sa email
+        // Wala nang paghahanap sa email kasi wala sa DB mo
+        // Kung wala pa rin — mananatiling null, hindi magka-error
         if (!$faculty) {
-            $faculty = Faculty::where('email', $user->email)->first();
-            
-            // Kung nakita sa email pero walang user_id — ikonekta natin
-            if ($faculty && is_null($faculty->user_id)) {
-                try {
-                    $faculty->user_id = $user->id;
-                    $faculty->save();
-                } catch (\Exception $e) {
-                    // Hayaan — hindi hahadlang sa pagpapakita ng pahina
-                }
-            }
+            $faculty = null;
         }
         
-        // Kumuha ng mga klase — KUNG MAY FACULTY RECORD
         $classes = collect([]);
         if ($faculty) {
             $classes = ClassModel::where('faculty_id', $faculty->id)
@@ -341,7 +334,6 @@ class PortalController extends Controller
                 ->get();
         }
         
-        // ✅ I-PASA SA VIEW — kahit walang laman, hindi magka-error
         return view('faculty.dashboard', [
             'faculty' => $faculty,
             'classes' => $classes

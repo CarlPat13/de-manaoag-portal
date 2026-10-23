@@ -36,25 +36,25 @@ Route::middleware('auth')->group(function () {
         ]);
     })->name('faculty.announcements');
     
-    // ⚠️ SIGURADUHIN: Pangalan ay 'faculty.assignGrades' — TUGMA SA BLADE
+    // Assign Grades — Tugma sa form action
     Route::post('/faculty/assign-grades', function (\Illuminate\Http\Request $request) {
         if (auth()->user()->role !== 'faculty') {
             return redirect()->route('login');
         }
-
+        
         $validated = $request->validate([
             'enrollment_ids'   => 'required|array',
             'enrollment_ids.*' => 'required|exists:enrollments,id',
             'grades'           => 'nullable|array',
             'grades.*'         => 'nullable|string|max:5',
         ]);
-
+        
         $faculty = \App\Models\Faculty::where('user_id', auth()->id())->first();
         
         foreach ($validated['enrollment_ids'] as $index => $enrollmentId) {
             $enrollment = \App\Models\Enrollment::findOrFail($enrollmentId);
             
-            // Ligtas na suriin kahit wala ang klase o faculty
+            // I-check kung sa iyo ang klase bago mag-save
             if (!$faculty || !$enrollment->class || $enrollment->class->faculty_id !== $faculty->id) {
                 continue;
             }
@@ -62,11 +62,11 @@ Route::middleware('auth')->group(function () {
             $enrollment->grade = $validated['grades'][$index] ?? null;
             $enrollment->save();
         }
-
+        
         return back()->with('success', '✅ Grades saved successfully!');
-    })->name('faculty.assignGrades'); // ← DAPAT EKSKAT ITO
+    })->name('faculty.assignGrades');
     
-    // Admin Routes
+    // === ADMIN ROUTES ===
     Route::get('/admin/dashboard', [PortalController::class, 'adminDashboard'])->name('admin.dashboard');
     
     Route::get('/admin/users', function () {
@@ -115,7 +115,7 @@ Route::middleware('auth')->group(function () {
         return redirect()->route('admin.subjects')->with('success', '✅ Subject updated successfully!');
     })->name('admin.subjects.update');
     
-    Route::delete('/admin/subjects/{subject}', function (\App\Models\Subject $subject) {
+    Route::delete('/admin/subjects/{subject}', function (\Illuminate\Http\Request $request, \App\Models\Subject $subject) {
         if (auth()->user()->role !== 'admin') {
             return redirect()->route('login');
         }
@@ -172,6 +172,7 @@ Route::middleware('auth')->group(function () {
             'class_id'   => 'required|exists:classes,id',
             'faculty_id' => 'nullable|exists:faculties,id',
         ]);
+        
         $class = \App\Models\ClassModel::findOrFail($validated['class_id']);
         $finalFacultyId = $validated['faculty_id'] ?? $class->faculty_id;
         
@@ -192,7 +193,7 @@ Route::middleware('auth')->group(function () {
         return redirect()->route('admin.enrollments')->with('success', $message);
     })->name('admin.enrollments.store');
     
-    Route::delete('/admin/enrollments/{enrollment}', function (\App\Models\Enrollment $enrollment) {
+    Route::delete('/admin/enrollments/{enrollment}', function (\Illuminate\Http\Request $enrollment) {
         if (auth()->user()->role !== 'admin') {
             return redirect()->route('login');
         }
