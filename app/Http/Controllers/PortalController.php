@@ -309,23 +309,23 @@ class PortalController extends Controller
     }
 
     // === FACULTY PAGES ===
-    public function facultyDashboard()
-    {
-        $user = Auth::user();
-        
-        $faculty = Faculty::where('user_id', $user->id)->first();
-        
-        if (!$faculty) {
-            return "⚠️ No Faculty record found for this account. Please contact Admin.";
-        }
-        
-        $classes = ClassModel::where('faculty_id', $faculty->id)
-            ->with(['subject'])
-            ->latest()
-            ->get();
-        
-        return view('faculty.dashboard', compact('faculty', 'classes'));
+ public function facultyDashboard()
+{
+    $user = Auth::user();
+    
+    $faculty = Faculty::where('user_id', $user->id)->first();
+    
+    if (!$faculty) {
+        return "⚠️ WALANG FACULTY RECORD! User ID: {$user->id}, Email: {$user->email}";
     }
+    
+    $classes = ClassModel::where('faculty_id', $faculty->id)
+        ->with(['subject'])
+        ->latest()
+        ->get();
+    
+    return "✅ MAY RECORD! Pangalan: {$faculty->first_name} {$faculty->last_name} | Klase: {$classes->count()}";
+}
 
     public function classStudents($classId)
     {
