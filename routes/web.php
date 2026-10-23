@@ -34,6 +34,36 @@ Route::middleware('auth')->group(function () {
             'announcements' => \App\Models\Announcement::latest()->get()
         ]);
     })->name('faculty.announcements');
+
+    // ✅ ADDED: Faculty Assign Grades Route
+    Route::post('/faculty/assign-grades', function (\Illuminate\Http\Request $request) {
+        if (auth()->user()->role !== 'faculty') {
+            return redirect()->route('login');
+        }
+
+        $validated = $request->validate([
+            'enrollment_ids'   => 'required|array',
+            'enrollment_ids.*' => 'required|exists:enrollments,id',
+            'grades'           => 'nullable|array',
+            'grades.*'         => 'nullable|string|max:5',
+        ]);
+
+        $faculty = \App\Models\Faculty::where('user_id', auth()->id())->first();
+        
+        foreach ($validated['enrollment_ids'] as $index => $enrollmentId) {
+            $enrollment = \App\Models\Enrollment::findOrFail($enrollmentId);
+            
+            // Siguraduhin na sa kanya ang klase bago maglagay ng grado
+            if (!$enrollment->class || $enrollment->class->faculty_id !== optional($faculty)->id) {
+                continue;
+            }
+
+            $enrollment->grade = $validated['grades'][$index] ?? null;
+            $enrollment->save();
+        }
+
+        return back()->with('success', '✅ Grades saved successfully!');
+    })->name('faculty.assignGrades');
     
     // Admin Routes
     Route::get('/admin/dashboard', [PortalController::class, 'adminDashboard'])->name('admin.dashboard');
@@ -43,9 +73,9 @@ Route::middleware('auth')->group(function () {
             return redirect()->route('login');
         }
         return view('admin.users', [
-            'students' => \App\Models\Student::with('user')->latest()->get(),
+            'students'   => \App\Models\Student::with('user')->latest()->get(),
             'faculties' => \App\Models\Faculty::with('user')->latest()->get(),
-            'admins' => \App\Models\Admin::with('user')->latest()->get()
+            'admins'    => \App\Models\Admin::with('user')->latest()->get()
         ]);
     })->name('admin.users');
     
@@ -67,7 +97,7 @@ Route::middleware('auth')->group(function () {
             'description' => 'nullable|string',
         ]);
         \App\Models\Subject::create($validated);
-        return redirect()->route('admin.subjects')->with('success', 'Subject added successfully!');
+        return redirect()->route('admin.subjects')->with('success', '✅ Subject added successfully!');
     })->name('admin.subjects.store');
     
     Route::put('/admin/subjects/{subject}', function (\Illuminate\Http\Request $request, \App\Models\Subject $subject) {
@@ -81,7 +111,7 @@ Route::middleware('auth')->group(function () {
             'description' => 'nullable|string',
         ]);
         $subject->update($validated);
-        return redirect()->route('admin.subjects')->with('success', 'Subject updated successfully!');
+        return redirect()->route('admin.subjects')->with('success', '✅ Subject updated successfully!');
     })->name('admin.subjects.update');
     
     Route::delete('/admin/subjects/{subject}', function (\App\Models\Subject $subject) {
@@ -89,10 +119,9 @@ Route::middleware('auth')->group(function () {
             return redirect()->route('login');
         }
         $subject->delete();
-        return redirect()->route('admin.subjects')->with('success', 'Subject deleted successfully!');
+        return redirect()->route('admin.subjects')->with('success', '✅ Subject deleted successfully!');
     })->name('admin.subjects.destroy');
     
-    // ✅ FIXED: Tinanggal ang enrollments sa with() — sanhi ng 500 error!
     Route::get('/admin/classes', function () {
         if (auth()->user()->role !== 'admin') {
             return redirect()->route('login');
@@ -118,7 +147,7 @@ Route::middleware('auth')->group(function () {
             'description' => 'nullable|string',
         ]);
         \App\Models\ClassModel::create($validated);
-        return redirect()->route('admin.classes')->with('success', 'Class created successfully!');
+        return redirect()->route('admin.classes')->with('success', '✅ Class created successfully!');
     })->name('admin.classes.store');
     
     Route::get('/admin/enrollments', function () {
@@ -138,24 +167,27 @@ Route::middleware('auth')->group(function () {
             return redirect()->route('login');
         }
         $validated = $request->validate([
-            'student_id'  => 'required|exists:students,id',
-            'class_id'    => 'required|exists:classes,id',
-            'faculty_id'  => 'nullable|exists:faculties,id',
+            'student_id' => 'required|exists:students,id',
+            'class_id'   => 'required|exists:classes,id',
+            'faculty_id' => 'nullable|exists:faculties,id',
         ]);
         $class = \App\Models\ClassModel::findOrFail($validated['class_id']);
         $finalFacultyId = $validated['faculty_id'] ?? $class->faculty_id;
+        
         \App\Models\Enrollment::firstOrCreate(
             ['student_id' => $validated['student_id'], 'class_id' => $validated['class_id']]
         );
+        
         if ($finalFacultyId && !$class->faculty_id) {
             $class->update(['faculty_id' => $finalFacultyId]);
-            $message = 'Student enrolled & instructor assigned!';
+            $message = '✅ Student enrolled & instructor assigned!';
         } elseif ($finalFacultyId && $class->faculty_id != $finalFacultyId) {
             $class->update(['faculty_id' => $finalFacultyId]);
-            $message = 'Student enrolled & instructor updated!';
+            $message = '✅ Student enrolled & instructor updated!';
         } else {
-            $message = 'Student enrolled successfully!';
+            $message = '✅ Student enrolled successfully!';
         }
+        
         return redirect()->route('admin.enrollments')->with('success', $message);
     })->name('admin.enrollments.store');
     
@@ -164,7 +196,7 @@ Route::middleware('auth')->group(function () {
             return redirect()->route('login');
         }
         $enrollment->delete();
-        return redirect()->route('admin.enrollments')->with('success', 'Enrollment removed.');
+        return redirect()->route('admin.enrollments')->with('success', '✅ Enrollment removed.');
     })->name('admin.enrollments.destroy');
     
     Route::get('/admin/announcements', function () {
@@ -190,11 +222,11 @@ Route::middleware('auth')->group(function () {
             'content' => 'required|string'
         ]);
         \App\Models\Announcement::create([
-            'title'     => $validated['title'],
-            'content'   => $validated['content'],
-            'admin_id'  => auth()->id()
+            'title'      => $validated['title'],
+            'content'    => $validated['content'],
+            'admin_id'   => auth()->id()
         ]);
-        return redirect()->route('admin.announcements')->with('success', 'Announcement posted successfully!');
+        return redirect()->route('admin.announcements')->with('success', '✅ Announcement posted successfully!');
     })->name('admin.announcements.store');
     
     Route::get('/admin/announcements/{announcement}/edit', function (\App\Models\Announcement $announcement) {
@@ -213,7 +245,7 @@ Route::middleware('auth')->group(function () {
             'content' => 'required|string'
         ]);
         $announcement->update($validated);
-        return redirect()->route('admin.announcements')->with('success', 'Announcement updated successfully!');
+        return redirect()->route('admin.announcements')->with('success', '✅ Announcement updated successfully!');
     })->name('admin.announcements.update');
     
     Route::delete('/admin/announcements/{announcement}', function (\App\Models\Announcement $announcement) {
@@ -221,6 +253,6 @@ Route::middleware('auth')->group(function () {
             return redirect()->route('login');
         }
         $announcement->delete();
-        return redirect()->route('admin.announcements')->with('success', 'Announcement deleted successfully!');
+        return redirect()->route('admin.announcements')->with('success', '✅ Announcement deleted successfully!');
     })->name('admin.announcements.destroy');
 });
