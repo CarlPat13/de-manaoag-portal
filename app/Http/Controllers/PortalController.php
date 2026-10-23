@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\Student;
@@ -8,7 +7,7 @@ use App\Models\Admin;
 use App\Models\Announcement;
 use App\Models\ClassModel;
 use App\Models\Enrollment;
-use App\Rules\Recaptcha; // ✅ NABALIK — Recaptcha included
+use App\Rules\Recaptcha;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
@@ -33,24 +32,21 @@ class PortalController extends Controller
             'year_level' => 'required|integer|min:1|max:4',
             'address'    => 'nullable|string|max:500',
             'password'   => 'required|string|min:8|confirmed',
-            'g-recaptcha-response' => ['required', new Recaptcha], // ✅ NABALIK
+            'g-recaptcha-response' => ['required', new Recaptcha],
         ], [
             'year_level.max' => 'Year Level can only be from 1st to 4th Year.',
             'email.unique'   => 'This email is already registered.',
         ]);
 
-        // Auto-generate Student ID
         $latestStudent = Student::orderByDesc('student_id')->first();
         $nextNumber = ($latestStudent && preg_match('/(\d+)$/', $latestStudent->student_id, $m))
             ? intval($m[1]) + 1
             : 1;
         $studentId = date('Y') . '-' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
-
         $fullName = trim($validated['first_name'] . ' '
             . ($validated['middle_name'] ? $validated['middle_name'].' ' : '')
             . $validated['last_name']);
 
-        // Create User record
         $user = User::create([
             'name' => $fullName,
             'email' => $validated['email'],
@@ -58,7 +54,6 @@ class PortalController extends Controller
             'role' => 'student',
         ]);
 
-        // Create Student record
         Student::create([
             'user_id' => $user->id,
             'student_id' => $studentId,
@@ -86,7 +81,7 @@ class PortalController extends Controller
             'login' => 'required|string',
             'password' => 'required|string',
             'role' => 'required|in:student,faculty,admin',
-            'g-recaptcha-response' => ['required', new Recaptcha], // ✅ NABALIK
+            'g-recaptcha-response' => ['required', new Recaptcha],
         ], [
             'role.required' => 'Please select your role.',
         ]);
@@ -208,11 +203,14 @@ class PortalController extends Controller
             ->latest()
             ->get();
 
+        // ✅ INALIS ANG where('is_active', 1) — GAGANA KAHIT WALANG COLUMN
+        $announcements = Announcement::latest()->limit(3)->get();
+
         return view('portal.dashboard', [
             'user' => $user,
             'student' => $user->student,
             'enrollments' => $enrollments,
-            'announcements' => Announcement::where('is_active', 1)->latest()->limit(3)->get()
+            'announcements' => $announcements
         ]);
     }
 
@@ -223,7 +221,6 @@ class PortalController extends Controller
         if (!$user) {
             return redirect()->route('login');
         }
-
         if ($user->student) {
             return view('portal.profile', ['student' => $user->student, 'user' => $user]);
         } elseif ($user->faculty) {
@@ -231,7 +228,6 @@ class PortalController extends Controller
         } elseif ($user->admin) {
             return view('admin.profile', ['admin' => $user->admin, 'user' => $user]);
         }
-
         return redirect()->route('login');
     }
 
@@ -241,7 +237,6 @@ class PortalController extends Controller
         $enrollments = Enrollment::where('student_id', $student->id)
             ->with(['class.subject', 'class.faculty'])
             ->get();
-
         return view('portal.schedule', [
             'student' => $student,
             'schedules' => $enrollments
@@ -254,7 +249,6 @@ class PortalController extends Controller
         $enrollments = Enrollment::where('student_id', $student->id)
             ->with(['class.subject', 'class.faculty'])
             ->get();
-
         return view('portal.grades', [
             'student' => $student,
             'enrollments' => $enrollments
@@ -305,8 +299,9 @@ class PortalController extends Controller
 
     public function announcements()
     {
+        // ✅ INALIS ANG where('is_active', 1)
         return view('portal.announcements', [
-            'announcements' => Announcement::where('is_active', 1)->latest()->get()
+            'announcements' => Announcement::latest()->get()
         ]);
     }
 
