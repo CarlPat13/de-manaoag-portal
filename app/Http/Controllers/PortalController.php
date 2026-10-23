@@ -220,6 +220,7 @@ class PortalController extends Controller
         if (!$user) {
             return redirect()->route('login');
         }
+
         if ($user->student) {
             return view('portal.profile', ['student' => $user->student, 'user' => $user]);
         } elseif ($user->faculty) {
@@ -227,6 +228,7 @@ class PortalController extends Controller
         } elseif ($user->admin) {
             return view('admin.profile', ['admin' => $user->admin, 'user' => $user]);
         }
+
         return redirect()->route('login');
     }
 
@@ -310,6 +312,7 @@ class PortalController extends Controller
         $user = Auth::user();
         
         if (!$user || $user->role !== 'faculty') {
+            auth()->logout();
             return redirect()->route('login')->withErrors(['login' => 'Faculty account required.']);
         }
         
@@ -317,9 +320,14 @@ class PortalController extends Controller
         
         if (!$faculty) {
             $faculty = Faculty::where('email', $user->email)->first();
+            
             if ($faculty && is_null($faculty->user_id)) {
-                $faculty->user_id = $user->id;
-                $faculty->save();
+                try {
+                    $faculty->user_id = $user->id;
+                    $faculty->save();
+                } catch (\Exception $e) {
+                    // Hayaan kung may error — hindi hahadlang sa pagpapakita ng pahina
+                }
             }
         }
         
