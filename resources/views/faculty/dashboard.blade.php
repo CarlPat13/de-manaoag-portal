@@ -18,7 +18,7 @@
     <div class="max-w-7xl mx-auto px-4 py-8">
         @if(session('warning'))
             <div class="bg-yellow-50 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-6 rounded-r-lg">
-                ⚠️ {{ session('warning') }}
+                {{ session('warning') }}
             </div>
         @endif
 

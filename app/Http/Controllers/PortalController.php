@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Controllers;
 
 use App\Models\User;
@@ -16,7 +15,6 @@ use Illuminate\Support\Facades\Auth;
 
 class PortalController extends Controller
 {
-    // === AUTHENTICATION ===
     public function showRegistration()
     {
         return view('auth.register');
@@ -154,7 +152,6 @@ class PortalController extends Controller
         return redirect()->route('login')->with('success', 'Logged out successfully.');
     }
 
-    // === CHANGE PASSWORD ===
     public function showChangePassword()
     {
         return view('portal.change-password');
@@ -191,7 +188,6 @@ class PortalController extends Controller
             ->with('success', 'Password changed successfully!');
     }
 
-    // === STUDENT PAGES ===
     public function dashboard()
     {
         $user = Auth::user();
@@ -223,7 +219,6 @@ class PortalController extends Controller
         if (!$user) {
             return redirect()->route('login');
         }
-
         if ($user->student) {
             return view('portal.profile', ['student' => $user->student, 'user' => $user]);
         } elseif ($user->faculty) {
@@ -231,7 +226,6 @@ class PortalController extends Controller
         } elseif ($user->admin) {
             return view('admin.profile', ['admin' => $user->admin, 'user' => $user]);
         }
-
         return redirect()->route('login');
     }
 
@@ -310,29 +304,35 @@ class PortalController extends Controller
         ]);
     }
 
-    // === FACULTY PAGES ===public function facultyDashboard()
-{
-    $user = Auth::user();
-    
-    if (!$user || $user->role !== 'faculty') {
-        return redirect()->route('login')->withErrors(['login' => 'Faculty account required.']);
+    public function facultyDashboard()
+    {
+        $user = Auth::user();
+        
+        if (!$user || $user->role !== 'faculty') {
+            return redirect()->route('login')->withErrors(['login' => 'Faculty account required.']);
+        }
+        
+        $faculty = Faculty::where('user_id', $user->id)->first();
+        
+        if (!$faculty) {
+            $faculty = Faculty::where('email', $user->email)->first();
+            if ($faculty && is_null($faculty->user_id)) {
+                $faculty->user_id = $user->id;
+                $faculty->save();
+            }
+        }
+        
+        $myClasses = collect([]);
+        if ($faculty) {
+            $myClasses = ClassModel::where('faculty_id', $faculty->id)
+                ->with('subject')
+                ->latest()
+                ->get();
+        }
+        
+        return view('faculty.dashboard', compact('faculty', 'myClasses'))
+            ->with('warning', $faculty ? null : '⚠️ No faculty record linked. Contact admin.');
     }
-    
-    $faculty = Faculty::where('user_id', $user->id)->first();
-    
-    $myClasses = collect([]);
-    if ($faculty) {
-        $myClasses = ClassModel::where('faculty_id', $faculty->id)
-            ->with('subject')
-            ->latest()
-            ->get();
-    }
-    
-    return view('faculty.dashboard', [
-        'faculty' => $faculty,
-        'myClasses' => $myClasses
-    ])->with('warning', $faculty ? null : 'Your faculty record is not yet linked. Contact admin.');
-}
 
     public function facultySchedule()
     {
@@ -351,110 +351,27 @@ class PortalController extends Controller
         return view('faculty.schedule', compact('faculty', 'myClasses'));
     }
 
-    public function classStudents($classId)
-    {
-        try {
-            $user = Auth::user();
-            
-            if (!$user || $user->role !== 'faculty') {
-                return redirect()->route('login')->withErrors(['login' => 'Faculty account required.']);
-            }
-            
-            $faculty = Faculty::where('user_id', $user->id)->first();
-            if (!$faculty) {
-                return "⚠️ Faculty record not found.";
-            }
-            
-            $class = ClassModel::where('id', $classId)
-                ->where('faculty_id', $faculty->id)
-                ->with(['enrollments.student'])
-                ->firstOrFail();
-            
-            if (view()->exists('faculty.class-students')) {
-                return view('faculty.class-students', compact('class'));
-            }
-            
-            return "<div style='padding: 2rem; font-family: sans-serif;'>
-                <h2>📋 {$class->subject?->code} - {$class->subject?->name}</h2>
-                <p>Schedule: {$class->schedule} | Room: {$class->room}</p>
-                <h3>Students ({$class->enrollments->count()})</h3>
-                <ol>";
-                foreach ($class->enrollments as $enroll) {
-                    return "<li>{$enroll->student->first_name} {$enroll->student->last_name} — Grade: " . ($enroll->grade ?? 'Pending') . "</li>";
-                }
-                return "</ol>
-                <br><a href='" . route('faculty.dashboard') . "'>← Back</a>
-            </div>";
-            
-        } catch (\Exception $e) {
-            return "🔥 Error: " . $e->getMessage();
-        }
-    }
-
-    public function storeGrade(Request $request, $enrollmentId)
-    {
-        $validated = $request->validate([
-            'grade' => 'nullable|numeric|min:1.0|max:5.0',
-        ], [
-            'grade.min' => 'Grade must be at least 1.0.',
-            'grade.max' => 'Grade must not exceed 5.0.',
-        ]);
-
-        $user = Auth::user();
-        
-        if (!$user || $user->role !== 'faculty') {
-            return redirect()->route('login');
-        }
-        
-        $faculty = Faculty::where('user_id', $user->id)->first();
-        if (!$faculty) {
-            return "⚠️ Faculty record not found.";
-        }
-        
-        $enrollment = Enrollment::findOrFail($enrollmentId);
-        $enrollment->load('class');
-        
-        if (!$enrollment->class || $enrollment->class->faculty_id !== $faculty->id) {
-            abort(403, 'Not authorized.');
-        }
-        
-        $enrollment->grade = $validated['grade'];
-        $enrollment->remarks = $validated['grade']
-            ? ($validated['grade'] <= 3.0 ? 'Passed' : 'Failed')
-            : null;
-        
-        $enrollment->save();
-        
-        return back()->with('success', 'Grade saved successfully! ✅');
-    }
-
-    // === ADMIN DASHBOARD ===
     public function adminDashboard()
     {
-        try {
-            $user = Auth::user();
-            
-            if (!$user || $user->role !== 'admin') {
-                auth()->logout();
-                return redirect()->route('login')->withErrors(['login' => 'Admin account required.']);
-            }
-            
-            $admin = Admin::where('user_id', $user->id)->first();
-            if (!$admin) {
-                return "⚠️ Admin record not found. User ID: {$user->id}";
-            }
-            
-            return view('admin.dashboard', [
-                'admin' => $admin,
-                'stats' => [
-                    'students' => Student::count(),
-                    'faculty'  => Faculty::count(),
-                    'admins'   => Admin::count(),
-                ]
-            ]);
-            
-        } catch (\Exception $e) {
-            return "🔥 Error: " . $e->getMessage();
+        $user = Auth::user();
+        
+        if (!$user || $user->role !== 'admin') {
+            auth()->logout();
+            return redirect()->route('login')->withErrors(['login' => 'Admin account required.']);
         }
+        
+        $admin = Admin::where('user_id', $user->id)->first();
+        if (!$admin) {
+            return redirect()->route('login')->withErrors(['login' => 'Admin record not found.']);
+        }
+        
+        return view('admin.dashboard', [
+            'admin' => $admin,
+            'stats' => [
+                'students' => Student::count(),
+                'faculty'  => Faculty::count(),
+                'admins'   => Admin::count(),
+            ]
+        ]);
     }
 }
