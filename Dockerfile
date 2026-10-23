@@ -1,4 +1,4 @@
-FROM php:8.2-apache
+FROM php:8.2-cli
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -13,11 +13,6 @@ RUN apt-get update && apt-get install -y \
 
 # Clear cache
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
-
-# Fix Apache MPM conflict — disable the old ones
-RUN a2dismod mpm_prefork mpm_worker \
-    && a2enmod mpm_event \
-    && a2enmod rewrite
 
 # Install PHP extensions
 RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip
@@ -35,8 +30,10 @@ COPY . /var/www/html
 RUN composer install --no-dev --optimize-autoloader
 
 # Set permissions
-RUN chown -R www-data:www-data /var/www/html \
-    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+RUN chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
-# Expose port 80
-EXPOSE 80
+# Expose port 8080
+EXPOSE 8080
+
+# Start Laravel server — SIGURADONG GAGANA!
+CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8080"]
