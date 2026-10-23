@@ -5,17 +5,13 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        * {
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Inter', sans-serif;
-            background: linear-gradient(rgba(10, 35, 66, 0.85), rgba(10, 35, 66, 0.90)), 
-                        url('{{ asset('images/bg-campus.jpg') }}') center/cover no-repeat fixed;
-            min-height: 100vh;
-            color: #1e293b;
-        }
+    body {
+        font-family: 'Inter', sans-serif;
+        background: linear-gradient(rgba(10, 35, 66, 0.85), rgba(10, 35, 66, 0.90)), 
+                    url('{{ asset('images/bg-campus.jpg') }}') center/cover no-repeat fixed;
+        min-height: 100vh;
+    }
+</style>
 </head>
 <body class="bg-gray-50 min-h-screen">
     @include('layouts.nav')
