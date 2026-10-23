@@ -1,9 +1,7 @@
-FROM php:8.2-apache
+# Use official PHP image
+FROM php:8.2-fpm
 
-# Fix MPM conflict
-RUN a2dismod mpm_event && a2enmod mpm_prefork
-
-# Install dependencies
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     git \
     curl \
@@ -19,9 +17,6 @@ RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 # Install PHP extensions
 RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
 
-# Enable Apache modules
-RUN a2enmod rewrite headers
-
 # Get Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
@@ -32,11 +27,14 @@ WORKDIR /var/www/html
 COPY . /var/www/html
 
 # Install dependencies
-RUN composer install --no-dev --optimize-autoloader --no-scripts
+RUN composer install --no-dev --optimize-autoloader
 
 # Permissions
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
-# Set public as document root
-RUN sed -i 's|DocumentRoot /var/www/html|DocumentRoot /var/www/html/public|g' /etc/apache2/sites-available/000-default.conf
+# Expose port
+EXPOSE 8080
+
+# Start Laravel server
+CMD php artisan serve --host=0.0.0.0 --port=8080
