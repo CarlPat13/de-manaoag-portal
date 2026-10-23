@@ -1,23 +1,17 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>Register - De Manaoag University</title>
-
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
-
+    {{-- <script src="https://www.google.com/recaptcha/api.js" async defer></script> --}}
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
           rel="stylesheet">
-
     <style>
         * {
             box-sizing: border-box;
         }
-
         body {
             font-family: 'Inter', sans-serif;
             margin: 0;
@@ -28,7 +22,6 @@
                 url("{{ asset('images/bg-campus.jpg') }}")
                 center/cover no-repeat fixed;
         }
-
         .register-card {
             width: min(1100px, 95%);
             margin: 30px auto;
@@ -39,7 +32,6 @@
             overflow: hidden;
             box-shadow: 0 25px 60px rgba(0, 0, 0, 0.3);
         }
-
         .university-panel {
             background: linear-gradient(145deg, #172554, #1e40af);
             color: white;
@@ -50,7 +42,6 @@
             justify-content: center;
             text-align: center;
         }
-
         .university-logo {
             width: 155px;
             height: 155px;
@@ -60,11 +51,9 @@
             box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
             margin-bottom: 25px;
         }
-
         .form-panel {
             padding: 30px 35px;
         }
-
         .form-input {
             width: 100%;
             padding: 10px 12px;
@@ -74,77 +63,60 @@
             outline: none;
             transition: border-color 0.2s, box-shadow 0.2s;
         }
-
         .form-input:focus {
             border-color: #2563eb;
             box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
         }
-
         @media (max-width: 700px) {
             .register-card {
                 grid-template-columns: 1fr;
                 margin: 15px auto;
             }
-
             .university-panel {
                 padding: 25px 20px;
             }
-
             .university-logo {
                 width: 100px;
                 height: 100px;
                 margin-bottom: 12px;
             }
-
             .form-panel {
                 padding: 25px 20px;
             }
         }
     </style>
 </head>
-
 <body class="flex items-center justify-center">
-
     <main class="register-card">
-
         <!-- LEFT PANEL: UNIVERSITY INFORMATION -->
         <section class="university-panel">
-
             <img
                 src="{{ asset('images/logo.png') }}"
                 alt="De Manaoag University Logo"
                 class="university-logo"
             >
-
             <h1 class="text-2xl font-bold tracking-wide">
                 DE MANAOAG UNIVERSITY
             </h1>
-
             <div class="w-20 h-1 bg-white rounded-full my-5"></div>
-
             <h2 class="text-lg font-semibold mb-3">
                 Student Registration
             </h2>
-
             <p class="text-sm text-blue-100 leading-6 max-w-xs">
                 Welcome to De Manaoag University. Create your student
                 account to begin your academic journey with us.
             </p>
-
             <div class="mt-8 text-xs text-blue-200">
                 QUALITY EDUCATION • EXCELLENCE • SERVICE
             </div>
-
         </section>
 
         <!-- RIGHT PANEL: REGISTRATION FORM -->
         <section class="form-panel">
-
             <div class="mb-5">
                 <h2 class="text-2xl font-bold text-blue-950">
                     Create Your Account
                 </h2>
-
                 <p class="text-gray-500 text-sm mt-1">
                     Fill in your details to register.
                     Fields marked with * are required.
@@ -162,9 +134,7 @@
 
             <form method="POST" action="{{ route('register') }}">
                 @csrf
-
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3">
-
                     <!-- FIRST NAME -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">
@@ -271,19 +241,15 @@
                             class="form-input bg-white"
                         >
                             <option value="">Select Year Level</option>
-
                             <option value="1" {{ old('year_level') == '1' ? 'selected' : '' }}>
                                 1st Year
                             </option>
-
                             <option value="2" {{ old('year_level') == '2' ? 'selected' : '' }}>
                                 2nd Year
                             </option>
-
                             <option value="3" {{ old('year_level') == '3' ? 'selected' : '' }}>
                                 3rd Year
                             </option>
-
                             <option value="4" {{ old('year_level') == '4' ? 'selected' : '' }}>
                                 4th Year
                             </option>
@@ -335,16 +301,15 @@
                             placeholder="Confirm password"
                         >
                     </div>
-
                 </div>
 
-                <!-- GOOGLE RECAPTCHA -->
-                <div class="mt-4 overflow-x-auto">
+                {{-- reCAPTCHA temporarily removed --}}
+                {{-- <div class="mt-4 overflow-x-auto">
                     <div
                         class="g-recaptcha"
                         data-sitekey="6LeKR_UtAAAAALV3mNQxLtRGCQKnFkqgICTR4jZE">
                     </div>
-                </div>
+                </div> --}}
 
                 <!-- REGISTER BUTTON -->
                 <button
@@ -356,7 +321,6 @@
                 >
                     REGISTER ACCOUNT
                 </button>
-
             </form>
 
             <p class="text-center mt-4 text-sm text-gray-600">
@@ -368,10 +332,7 @@
                     Login here
                 </a>
             </p>
-
         </section>
-
     </main>
-
 </body>
 </html>
