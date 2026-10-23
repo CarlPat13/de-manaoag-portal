@@ -27,7 +27,6 @@
                             <th class="p-4">Subject Name</th>
                             <th class="p-4">Schedule</th>
                             <th class="p-4">Room</th>
-                            <th class="p-4">Students</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -37,9 +36,6 @@
                             <td class="p-4">{{ $c->subject->name ?? 'Unknown' }}</td>
                             <td class="p-4">{{ $c->schedule ?? '—' }}</td>
                             <td class="p-4">{{ $c->room ?? '—' }}</td>
-                            <td class="p-4 font-bold">
-                                {{ $c->enrollments->count() ?? 0 }}
-                            </td>
                         </tr>
                         @endforeach
                     </tbody>

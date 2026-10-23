@@ -338,7 +338,7 @@ class PortalController extends Controller
         }
         
         $myClasses = ClassModel::where('faculty_id', $faculty->id)
-            ->with(['subject', 'enrollments'])
+            ->with('subject')
             ->latest()
             ->get();
         
@@ -364,8 +364,21 @@ class PortalController extends Controller
                 ->with(['enrollments.student'])
                 ->firstOrFail();
             
-            // ✅ Diretsong view na — walang fallback HTML para hindi mag-error
-            return view('faculty.class-students', compact('class'));
+            if (view()->exists('faculty.class-students')) {
+                return view('faculty.class-students', compact('class'));
+            }
+            
+            return "<div style='padding: 2rem; font-family: sans-serif;'>
+                <h2>📋 {$class->subject?->code} - {$class->subject?->name}</h2>
+                <p>Schedule: {$class->schedule} | Room: {$class->room}</p>
+                <h3>Students ({$class->enrollments->count()})</h3>
+                <ol>";
+                foreach ($class->enrollments as $enroll) {
+                    return "<li>{$enroll->student->first_name} {$enroll->student->last_name} — Grade: " . ($enroll->grade ?? 'Pending') . "</li>";
+                }
+                return "</ol>
+                <br><a href='" . route('faculty.dashboard') . "'>← Back</a>
+            </div>";
             
         } catch (\Exception $e) {
             return "🔥 Error: " . $e->getMessage();
