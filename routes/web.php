@@ -92,13 +92,13 @@ Route::middleware('auth')->group(function () {
         return redirect()->route('admin.subjects')->with('success', 'Subject deleted successfully!');
     })->name('admin.subjects.destroy');
     
-    // ✅ FIXED: Added missing $subjects & $faculties for Manage Classes
+    // ✅ FIXED: Tinanggal ang enrollments sa with() — sanhi ng 500 error!
     Route::get('/admin/classes', function () {
         if (auth()->user()->role !== 'admin') {
             return redirect()->route('login');
         }
         return view('admin.classes', [
-            'classes'   => \App\Models\ClassModel::with(['subject', 'faculty', 'enrollments'])->latest()->get(),
+            'classes'   => \App\Models\ClassModel::with(['subject', 'faculty'])->latest()->get(),
             'subjects'  => \App\Models\Subject::latest()->get(),
             'faculties' => \App\Models\Faculty::latest()->get()
         ]);
