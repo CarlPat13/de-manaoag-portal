@@ -1,5 +1,4 @@
 <?php
-
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PortalController;
 
@@ -27,11 +26,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/change-password', [PortalController::class, 'showChangePassword'])->name('password.change');
     Route::post('/change-password', [PortalController::class, 'updatePassword'])->name('password.update');
     
-    // === FACULTY ROUTES — TINAMA NA ===
+    // === FACULTY ROUTES — ORIHINAL, WALANG BAGONG DAGDAG ===
     Route::get('/faculty/dashboard', [PortalController::class, 'facultyDashboard'])->name('faculty.dashboard');
     Route::get('/faculty/schedule', [PortalController::class, 'facultySchedule'])->name('faculty.schedule');
-    Route::get('/faculty/class/{classId}/students', [PortalController::class, 'classStudents'])->name('faculty.classStudents');
-    Route::post('/faculty/enrollment/{enrollmentId}/grade', [PortalController::class, 'storeGrade'])->name('faculty.store-grade');
     
     Route::get('/faculty/announcements', function () {
         return view('faculty.announcements', [
