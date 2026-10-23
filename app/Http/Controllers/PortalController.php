@@ -7,7 +7,7 @@ use App\Models\Admin;
 use App\Models\Announcement;
 use App\Models\ClassModel;
 use App\Models\Enrollment;
-use App\Rules\Recaptcha;
+// use App\Rules\Recaptcha; // ✅ Komentuhin muna
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
@@ -26,13 +26,13 @@ class PortalController extends Controller
             'first_name' => 'required|string|max:50',
             'middle_name' => 'nullable|string|max:50',
             'last_name'  => 'required|string|max:50',
-            'email'      => 'required|email|unique:users,email|max:100',
-            'phone'      => 'nullable|string|digits:11|starts_with:09',
-            'course'     => 'required|string|max:100',
-            'year_level' => 'required|integer|min:1|max:4',
-            'address'    => 'nullable|string|max:500',
-            'password'   => 'required|string|min:8|confirmed',
-            'g-recaptcha-response' => ['required', new Recaptcha],
+            'email'       => 'required|email|unique:users,email|max:100',
+            'phone'       => 'nullable|string|digits:11|starts_with:09',
+            'course'      => 'required|string|max:100',
+            'year_level'  => 'required|integer|min:1|max:4',
+            'address'     => 'nullable|string|max:500',
+            'password'    => 'required|string|min:8|confirmed',
+            // 'g-recaptcha-response' => ['required', new Recaptcha], // ✅ Tinanggal muna
         ], [
             'year_level.max' => 'Year Level can only be from 1st to 4th Year.',
             'email.unique'   => 'This email is already registered.',
@@ -84,7 +84,7 @@ class PortalController extends Controller
             'login' => 'required|string',
             'password' => 'required|string',
             'role' => 'required|in:student,faculty,admin',
-            'g-recaptcha-response' => ['required', new Recaptcha],
+            // 'g-recaptcha-response' => ['required', new Recaptcha], // ✅ Tinanggal muna
         ], [
             'role.required' => 'Please select your role.',
         ]);
@@ -201,7 +201,6 @@ class PortalController extends Controller
             return redirect()->route('login')->withErrors(['login' => 'Student account not found.']);
         }
 
-        // ✅ Kasama ang grade mula sa enrollment
         $enrollments = Enrollment::where('student_id', $user->student->id)
             ->with(['class.subject', 'class.faculty'])
             ->latest()
@@ -222,6 +221,7 @@ class PortalController extends Controller
         if (!$user) {
             return redirect()->route('login');
         }
+
         if ($user->student) {
             return view('portal.profile', ['student' => $user->student, 'user' => $user]);
         } elseif ($user->faculty) {
@@ -229,6 +229,7 @@ class PortalController extends Controller
         } elseif ($user->admin) {
             return view('admin.profile', ['admin' => $user->admin, 'user' => $user]);
         }
+
         return redirect()->route('login');
     }
 
@@ -249,7 +250,7 @@ class PortalController extends Controller
     {
         $student = Auth::user()->student;
         $enrollments = Enrollment::where('student_id', $student->id)
-            ->with(['class.subject', 'class.faculty']) // ✅ Kasama ang faculty
+            ->with(['class.subject', 'class.faculty'])
             ->get();
 
         return view('portal.grades', [
@@ -293,7 +294,7 @@ class PortalController extends Controller
                 'room'     => $class->room ?? 'Not Assigned',
                 'faculty'  => $faculty ? $faculty->first_name . ' ' . $faculty->last_name : 'Not Assigned',
                 'status'   => $enroll->grade ? 'Completed' : 'Ongoing',
-                'grade'    => $enroll->grade, // ✅ Diretso mula sa enrollment
+                'grade'    => $enroll->grade,
             ];
         });
 
@@ -359,7 +360,6 @@ class PortalController extends Controller
         $enrollment = Enrollment::findOrFail($enrollmentId);
         $enrollment->load('class');
 
-        // ✅ Siguraduhin na sariling klase lang ang mabibigyan ng grade
         if (!$enrollment->class || $enrollment->class->faculty_id !== $user->faculty->id) {
             abort(403, 'Not authorized.');
         }
