@@ -46,10 +46,6 @@
                    class="hover:text-yellow-300 transition font-medium {{ request()->routeIs('profile') ? 'text-yellow-300 border-b-2 border-yellow-300 pb-1' : '' }}">
                     Profile
                 </a>
-                <a href="{{ route('schedule') }}" 
-                   class="hover:text-yellow-300 transition font-medium {{ request()->routeIs('schedule') ? 'text-yellow-300 border-b-2 border-yellow-300 pb-1' : '' }}">
-                    Schedule
-                </a>
                 <a href="{{ route('grades') }}" 
                    class="hover:text-yellow-300 transition font-medium {{ request()->routeIs('grades') ? 'text-yellow-300 border-b-2 border-yellow-300 pb-1' : '' }}">
                     Grades
