@@ -6,7 +6,6 @@ use App\Http\Controllers\PortalController;
 Route::get('/', function () {
     return redirect()->route('login');
 });
-
 Route::get('/register', [PortalController::class, 'showRegistration'])->name('register');
 Route::post('/register', [PortalController::class, 'register']);
 Route::get('/login', [PortalController::class, 'showLogin'])->name('login');
@@ -15,10 +14,10 @@ Route::post('/logout', [PortalController::class, 'logout'])->name('logout');
 
 // === PROTECTED ROUTES ===
 Route::middleware('auth')->group(function () {
-    // Student & Common Routes
+    // === STUDENT & COMMON ROUTES ===
     Route::get('/dashboard', [PortalController::class, 'dashboard'])->name('dashboard');
     Route::get('/profile', [PortalController::class, 'profile'])->name('profile');
-    Route::get('/schedule', [PortalController::class, 'schedule'])->name('schedule');
+    Route::get('/schedule', [PortalController::class, 'schedule'])->name('schedule'); // NANDITO PA RIN ✅
     Route::get('/grades', [PortalController::class, 'grades'])->name('grades');
     Route::get('/subjects', [PortalController::class, 'subjects'])->name('subjects');
     Route::get('/announcements', [PortalController::class, 'announcements'])->name('announcements');
@@ -85,9 +84,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/admin/users', function () {
         if (auth()->user()->role !== 'admin') return redirect()->route('login');
         return view('admin.users', [
-            'students'  => \App\Models\Student::with('user')->latest()->get(),
-            'faculties' => \App\Models\Faculty::with('user')->latest()->get(),
-            'admins'    => \App\Models\Admin::with('user')->latest()->get()
+            'students'   => \App\Models\Student::with('user')->latest()->get(),
+            'faculties'  => \App\Models\Faculty::with('user')->latest()->get(),
+            'admins'     => \App\Models\Admin::with('user')->latest()->get()
         ]);
     })->name('admin.users');
     
@@ -129,9 +128,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/admin/classes', function () {
         if (auth()->user()->role !== 'admin') return redirect()->route('login');
         return view('admin.classes', [
-            'classes'   => \App\Models\ClassModel::with(['subject', 'faculty'])->latest()->get(),
-            'subjects'  => \App\Models\Subject::latest()->get(),
-            'faculties' => \App\Models\Faculty::latest()->get()
+            'classes'    => \App\Models\ClassModel::with(['subject', 'faculty'])->latest()->get(),
+            'subjects'   => \App\Models\Subject::latest()->get(),
+            'faculties'  => \App\Models\Faculty::latest()->get()
         ]);
     })->name('admin.classes');
     
@@ -153,10 +152,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/admin/enrollments', function () {
         if (auth()->user()->role !== 'admin') return redirect()->route('login');
         return view('admin.enrollments', [
-            'classes'     => \App\Models\ClassModel::with(['subject', 'faculty'])->latest()->get(),
-            'students'    => \App\Models\Student::latest()->get(),
-            'faculties'   => \App\Models\Faculty::latest()->get(),
-            'enrollments' => \App\Models\Enrollment::with(['student', 'class.faculty'])->latest()->get()
+            'classes'       => \App\Models\ClassModel::with(['subject', 'faculty'])->latest()->get(),
+            'students'      => \App\Models\Student::latest()->get(),
+            'faculties'     => \App\Models\Faculty::latest()->get(),
+            'enrollments'   => \App\Models\Enrollment::with(['student', 'class.faculty'])->latest()->get()
         ]);
     })->name('admin.enrollments');
     
