@@ -374,17 +374,17 @@ class PortalController extends Controller
         ]);
     }
 
-    // ✅ BAGONG DAGDAG: Tanggalin ang estudyante sa klase
-    public function destroyEnrollment($id)
+    // ✅ INAYOS: Pangalan ng parameter = tugma sa route {enrollment}
+    public function destroyEnrollment($enrollment)
     {
-        $enrollment = Enrollment::find($id);
+        $record = Enrollment::find($enrollment);
         
-        if (!$enrollment) {
+        if (!$record) {
             return redirect()->back()->with('error', 'Enrollment not found.');
         }
 
-        $enrollment->delete();
+        $record->delete();
 
-        return redirect()->back()->with('success', 'Student removed successfully!');
+        return redirect()->back()->with('success', '✅ Student removed successfully!');
     }
 }
