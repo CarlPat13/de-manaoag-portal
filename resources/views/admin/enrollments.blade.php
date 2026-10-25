@@ -50,7 +50,16 @@
                             <option value="">-- Choose Student --</option>
                             @foreach($students as $s)
                                 <option value="{{ $s->id }}">
-                                    {{ $s->student_id }} — {{ $s->first_name }} {{ $s->last_name }} | {{ $s->course }} | {{ $s->year_level }} Yr
+                                    {{ $s->student_id }} — {{ $s->first_name }} {{ $s->last_name }} | {{ $s->course }} | 
+                                    @if($s->year_level == 1)
+                                        1st Year
+                                    @elseif($s->year_level == 2)
+                                        2nd Year
+                                    @elseif($s->year_level == 3)
+                                        3rd Year
+                                    @elseif($s->year_level == 4)
+                                        4th Year
+                                    @endif
                                 </option>
                             @endforeach
                         </select>
@@ -86,59 +95,80 @@
             </form>
         </div>
 
-        {{-- CURRENT ENROLLMENTS --}}
-        <h2 class="text-lg font-bold text-white mb-4">📝 Enrolled Students</h2>
-        @foreach($classes as $c)
-            @php $enrolled = \App\Models\Enrollment::where('class_id', $c->id)->with('student')->get(); @endphp
-            @if($enrolled->count())
-                <div class="bg-white/95 rounded-xl shadow-sm border mb-4 overflow-hidden backdrop-blur-sm">
-                    <div class="bg-blue-50 px-5 py-3 border-b">
-                        <h3 class="font-bold text-blue-900">
-                            {{ $c->subject->code ?? '' }} — {{ $c->subject->name ?? 'Unknown' }}
-                            <span class="text-sm font-normal text-gray-500 ml-2">
-                                {{ $enrolled->count() }} student(s)
-                            </span>
-                            @if($c->faculty)
-                                <span class="text-sm font-normal text-blue-600 ml-3">
-                                    Instructor: {{ $c->faculty->first_name }} {{ $c->faculty->last_name }}
-                                </span>
-                            @endif
-                        </h3>
-                    </div>
-                    <div class="p-4">
-                        <table class="w-full text-left">
-                            <thead>
-                                <tr class="text-sm text-gray-500">
-                                    <th class="pb-2">Student ID</th>
-                                    <th class="pb-2">Full Name</th>
-                                    <th class="pb-2">Course / Year</th>
-                                    <th class="pb-2 text-right">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($enrolled as $e)
-                                    <tr class="border-t">
-                                        <td class="p-3 font-mono text-sm">{{ $e->student->student_id }}</td>
-                                        <td class="p-3">{{ $e->student->first_name }} {{ $e->student->last_name }}</td>
-                                        <td class="p-3">
-                                            {{ $e->student->course ?? '—' }} 
-                                            <span class="text-gray-500">•</span> 
-                                            {{ $e->student->year_level ? $e->student->year_level . 'nd Year' : '—' }}
-                                        </td>
-                                        <td class="p-3 text-right">
-                                            <form method="POST" action="{{ route('admin.enrollments.destroy', $e) }}" 
-                                                onsubmit="return confirm('Remove this student?')">
-                                                @csrf @method('DELETE')
-                                                <button type="submit" class="text-red-600 hover:text-red-800 text-sm">
-                                                    Remove
-                                                </button>
-                                            </form>
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
+        {{-- CURRENT ENROLLMENTS — GROUPED BY YEAR LEVEL --}}
+        <h2 class="text-lg font-bold text-white mb-4">📝 Enrolled Students — By Year Level</h2>
+
+        @foreach([1 => '1st Year', 2 => '2nd Year', 3 => '3rd Year', 4 => '4th Year'] as $yearNum => $yearLabel)
+            @php
+                $yearHasEnrollments = false;
+                $yearClasses = collect();
+                foreach ($classes as $c) {
+                    $enrolled = \App\Models\Enrollment::where('class_id', $c->id)
+                        ->whereHas('student', function($q) use ($yearNum) {
+                            $q->where('year_level', $yearNum);
+                        })
+                        ->with('student')
+                        ->get();
+                    if ($enrolled->count()) {
+                        $yearHasEnrollments = true;
+                        $yearClasses->push(['class' => $c, 'enrollments' => $enrolled]);
+                    }
+                }
+            @endphp
+
+            @if($yearHasEnrollments)
+                <div class="mb-8">
+                    <h3 class="text-xl font-bold text-yellow-300 mb-3 border-b-2 border-yellow-400/50 pb-2">
+                        📚 {{ $yearLabel }}
+                    </h3>
+                    @foreach($yearClasses as $group)
+                        @php $c = $group['class']; $enrolled = $group['enrollments']; @endphp
+                        <div class="bg-white/95 rounded-xl shadow-sm border mb-4 overflow-hidden backdrop-blur-sm">
+                            <div class="bg-blue-50 px-5 py-3 border-b">
+                                <h4 class="font-bold text-blue-900">
+                                    {{ $c->subject->code ?? '' }} — {{ $c->subject->name ?? 'Unknown' }}
+                                    <span class="text-sm font-normal text-gray-500 ml-2">
+                                        {{ $enrolled->count() }} student(s)
+                                    </span>
+                                    @if($c->faculty)
+                                        <span class="text-sm font-normal text-blue-600 ml-3">
+                                            Instructor: {{ $c->faculty->first_name }} {{ $c->faculty->last_name }}
+                                        </span>
+                                    @endif
+                                </h4>
+                            </div>
+                            <div class="p-4">
+                                <table class="w-full text-left">
+                                    <thead>
+                                        <tr class="text-sm text-gray-500">
+                                            <th class="pb-2">Student ID</th>
+                                            <th class="pb-2">Full Name</th>
+                                            <th class="pb-2">Course</th>
+                                            <th class="pb-2 text-right">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach($enrolled as $e)
+                                            <tr class="border-t">
+                                                <td class="p-3 font-mono text-sm">{{ $e->student->student_id }}</td>
+                                                <td class="p-3">{{ $e->student->first_name }} {{ $e->student->last_name }}</td>
+                                                <td class="p-3">{{ $e->student->course ?? '—' }}</td>
+                                                <td class="p-3 text-right">
+                                                    <form method="POST" action="{{ route('admin.enrollments.destroy', $e) }}" 
+                                                        onsubmit="return confirm('Remove this student?')">
+                                                        @csrf @method('DELETE')
+                                                        <button type="submit" class="text-red-600 hover:text-red-800 text-sm">
+                                                            Remove
+                                                        </button>
+                                                    </form>
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    @endforeach
                 </div>
             @endif
         @endforeach
