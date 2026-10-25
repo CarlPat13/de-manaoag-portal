@@ -17,7 +17,7 @@ Route::middleware('auth')->group(function () {
     // === STUDENT & COMMON ROUTES ===
     Route::get('/dashboard', [PortalController::class, 'dashboard'])->name('dashboard');
     Route::get('/profile', [PortalController::class, 'profile'])->name('profile');
-    Route::get('/schedule', [PortalController::class, 'schedule'])->name('schedule'); // NANDITO PA RIN ✅
+    Route::get('/schedule', [PortalController::class, 'schedule'])->name('schedule');
     Route::get('/grades', [PortalController::class, 'grades'])->name('grades');
     Route::get('/subjects', [PortalController::class, 'subjects'])->name('subjects');
     Route::get('/announcements', [PortalController::class, 'announcements'])->name('announcements');
@@ -187,11 +187,8 @@ Route::middleware('auth')->group(function () {
         return redirect()->route('admin.enrollments')->with('success', $msg);
     })->name('admin.enrollments.store');
     
-    Route::delete('/admin/enrollments/{enrollment}', function (\Illuminate\Http\Request $request, $enrollment) {
-        if (auth()->user()->role !== 'admin') return redirect()->route('login');
-        $enrollment->delete();
-        return redirect()->route('admin.enrollments')->with('success', '✅ Enrollment removed.');
-    })->name('admin.enrollments.destroy');
+    // ✅ TANGGALIN: Ang lumang duplicate na ruta, GAMITIN ANG CONTROLLER METHOD
+    Route::delete('/admin/enrollments/{id}', [PortalController::class, 'destroyEnrollment'])->name('admin.enrollments.destroy');
     
     Route::get('/admin/announcements', function () {
         if (auth()->user()->role !== 'admin') return redirect()->route('login');
@@ -221,8 +218,6 @@ Route::middleware('auth')->group(function () {
         if (auth()->user()->role !== 'admin') return redirect()->route('login');
         return view('admin.announcement-edit', compact('announcement'));
     })->name('admin.announcements.edit');
-    
-    Route::delete('/admin/enrollments/{id}', [PortalController::class, 'destroyEnrollment'])->name('admin.enrollments.destroy');
     
     Route::put('/admin/announcements/{announcement}', function (\Illuminate\Http\Request $request, \App\Models\Announcement $announcement) {
         if (auth()->user()->role !== 'admin') return redirect()->route('login');
