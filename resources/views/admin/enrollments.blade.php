@@ -7,17 +7,17 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-    body {
-        font-family: 'Inter', sans-serif;
-        background: linear-gradient(rgba(10, 35, 66, 0.85), rgba(10, 35, 66, 0.90)), 
-                    url('{{ asset('images/bg-campus.jpg') }}') center/cover no-repeat fixed;
-        min-height: 100vh;
-    }
-</style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(rgba(10, 35, 66, 0.85), rgba(10, 35, 66, 0.90)), 
+                        url('{{ asset('images/bg-campus.jpg') }}') center/cover no-repeat fixed;
+            min-height: 100vh;
+        }
+    </style>
 </head>
 <body>
     @include('layouts.nav')
-    <div class="max-w-4xl mx-auto px-4 py-8">
+    <div class="max-w-5xl mx-auto px-4 py-8">
         <h1 class="text-2xl font-bold text-white mb-6">📋 Enroll Students</h1>
         
         @if(session('success'))
@@ -50,7 +50,7 @@
                             <option value="">-- Choose Student --</option>
                             @foreach($students as $s)
                                 <option value="{{ $s->id }}">
-                                    {{ $s->student_id }} — {{ $s->last_name }}, {{ $s->first_name }}
+                                    {{ $s->student_id }} — {{ $s->first_name }} {{ $s->last_name }} | {{ $s->course }} | {{ $s->year_level }} Yr
                                 </option>
                             @endforeach
                         </select>
@@ -110,7 +110,8 @@
                             <thead>
                                 <tr class="text-sm text-gray-500">
                                     <th class="pb-2">Student ID</th>
-                                    <th class="pb-2">Name</th>
+                                    <th class="pb-2">Full Name</th>
+                                    <th class="pb-2">Course / Year</th>
                                     <th class="pb-2 text-right">Action</th>
                                 </tr>
                             </thead>
@@ -118,10 +119,15 @@
                                 @foreach($enrolled as $e)
                                     <tr class="border-t">
                                         <td class="p-3 font-mono text-sm">{{ $e->student->student_id }}</td>
-                                        <td class="p-3">{{ $e->student->last_name }}, {{ $e->student->first_name }}</td>
+                                        <td class="p-3">{{ $e->student->first_name }} {{ $e->student->last_name }}</td>
+                                        <td class="p-3">
+                                            {{ $e->student->course ?? '—' }} 
+                                            <span class="text-gray-500">•</span> 
+                                            {{ $e->student->year_level ? $e->student->year_level . 'nd Year' : '—' }}
+                                        </td>
                                         <td class="p-3 text-right">
                                             <form method="POST" action="{{ route('admin.enrollments.destroy', $e) }}" 
-                                                  onsubmit="return confirm('Remove this student?')">
+                                                onsubmit="return confirm('Remove this student?')">
                                                 @csrf @method('DELETE')
                                                 <button type="submit" class="text-red-600 hover:text-red-800 text-sm">
                                                     Remove
@@ -141,7 +147,6 @@
     <script>
         const classSelect = document.getElementById('classSelect');
         const facultySelect = document.getElementById('facultySelect');
-
         const allClasses = @json($allClassesData);
 
         classSelect.addEventListener('change', function () {
@@ -155,7 +160,6 @@
 
             const subjectId = selectedOption.dataset.subjectId;
             const assignedFacultyId = selectedOption.dataset.facultyId;
-
             const subjectInstructors = [];
             const seen = new Set();
             
