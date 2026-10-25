@@ -35,6 +35,9 @@
                     'faculty_name' => $c->faculty ? $c->faculty->first_name.' '.$c->faculty->last_name : null,
                 ];
             })->values();
+
+            // Ihanda ang lahat ng enrollment nang isang beses lang
+            $allEnrollments = \App\Models\Enrollment::with('student', 'class')->get()->groupBy('class_id');
         @endphp
 
         {{-- ENROLLMENT FORM --}}
@@ -100,29 +103,28 @@
 
         @foreach([1 => '1st Year', 2 => '2nd Year', 3 => '3rd Year', 4 => '4th Year'] as $yearNum => $yearLabel)
             @php
-                $yearHasEnrollments = false;
-                $yearClasses = collect();
+                $hasContent = false;
+                $output = [];
+
                 foreach ($classes as $c) {
-                    $enrolled = \App\Models\Enrollment::where('class_id', $c->id)
-                        ->whereHas('student', function($q) use ($yearNum) {
-                            $q->where('year_level', $yearNum);
-                        })
-                        ->with('student')
-                        ->get();
+                    $enrolled = isset($allEnrollments[$c->id]) 
+                        ? $allEnrollments[$c->id]->where('student.year_level', $yearNum) 
+                        : collect();
+                    
                     if ($enrolled->count()) {
-                        $yearHasEnrollments = true;
-                        $yearClasses->push(['class' => $c, 'enrollments' => $enrolled]);
+                        $hasContent = true;
+                        $output[] = ['class' => $c, 'students' => $enrolled];
                     }
                 }
             @endphp
 
-            @if($yearHasEnrollments)
+            @if($hasContent)
                 <div class="mb-8">
                     <h3 class="text-xl font-bold text-yellow-300 mb-3 border-b-2 border-yellow-400/50 pb-2">
                         📚 {{ $yearLabel }}
                     </h3>
-                    @foreach($yearClasses as $group)
-                        @php $c = $group['class']; $enrolled = $group['enrollments']; @endphp
+                    @foreach($output as $item)
+                        @php $c = $item['class']; $enrolled = $item['students']; @endphp
                         <div class="bg-white/95 rounded-xl shadow-sm border mb-4 overflow-hidden backdrop-blur-sm">
                             <div class="bg-blue-50 px-5 py-3 border-b">
                                 <h4 class="font-bold text-blue-900">
@@ -150,15 +152,19 @@
                                     <tbody>
                                         @foreach($enrolled as $e)
                                             <tr class="border-t">
-                                                <td class="p-3 font-mono text-sm">{{ $e->student->student_id }}</td>
-                                                <td class="p-3">{{ $e->student->first_name }} {{ $e->student->last_name }}</td>
-                                                <td class="p-3">{{ $e->student->course ?? '—' }}</td>
+                                                <td class="p-3 font-mono text-sm">{{ optional($e->student)->student_id ?? '—' }}</td>
+                                                <td class="p-3">
+                                                    {{ optional($e->student)->first_name ?? '' }} 
+                                                    {{ optional($e->student)->last_name ?? '' }}
+                                                </td>
+                                                <td class="p-3">{{ optional($e->student)->course ?? '—' }}</td>
                                                 <td class="p-3 text-right">
-                                                    <form method="POST" action="{{ route('admin.enrollments.destroy', $e) }}" 
+                                                    <form method="POST" action="{{ route('admin.enrollments.destroy', $e->id) }}" 
                                                         onsubmit="return confirm('Remove this student?')">
-                                                        @csrf @method('DELETE')
-                                                        <button type="submit" class="text-red-600 hover:text-red-800 text-sm">
-                                                            Remove
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" class="text-red-600 hover:text-red-800 text-sm font-medium">
+                                                            🗑️ Remove
                                                         </button>
                                                     </form>
                                                 </td>
