@@ -215,19 +215,45 @@
                         >
                     </div>
 
-                    <!-- COURSE -->
+                    <!-- COURSE — DROPDOWN -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">
                             Course *
                         </label>
-                        <input
-                            type="text"
+                        <select
                             name="course"
                             required
-                            value="{{ old('course') }}"
-                            class="form-input"
-                            placeholder="Enter your course"
+                            class="form-input bg-white"
                         >
+                            <option value="">Select Your Course</option>
+                            <option value="BSIT" {{ old('course') == 'BSIT' ? 'selected' : '' }}>
+                                Bachelor of Science in Information Technology (BSIT)
+                            </option>
+                            <option value="BSCS" {{ old('course') == 'BSCS' ? 'selected' : '' }}>
+                                Bachelor of Science in Computer Science (BSCS)
+                            </option>
+                            <option value="BSBA" {{ old('course') == 'BSBA' ? 'selected' : '' }}>
+                                Bachelor of Science in Business Administration (BSBA)
+                            </option>
+                            <option value="BEEd" {{ old('course') == 'BEEd' ? 'selected' : '' }}>
+                                Bachelor of Elementary Education (BEEd)
+                            </option>
+                            <option value="BSEd" {{ old('course') == 'BSEd' ? 'selected' : '' }}>
+                                Bachelor of Secondary Education (BSEd)
+                            </option>
+                            <option value="BSHM" {{ old('course') == 'BSHM' ? 'selected' : '' }}>
+                                Bachelor of Science in Hospitality Management (BSHM)
+                            </option>
+                            <option value="BSCrim" {{ old('course') == 'BSCrim' ? 'selected' : '' }}>
+                                Bachelor of Science in Criminology (BSCrim)
+                            </option>
+                            <option value="AB" {{ old('course') == 'AB' ? 'selected' : '' }}>
+                                Bachelor of Arts in Political Science (AB PolSci)
+                            </option>
+                            <option value="OTHER" {{ old('course') == 'OTHER' ? 'selected' : '' }}>
+                                Other / Not Listed
+                            </option>
+                        </select>
                     </div>
 
                     <!-- YEAR LEVEL -->
