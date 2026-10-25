@@ -42,6 +42,7 @@ class PortalController extends Controller
         $nextNumber = ($latestStudent && preg_match('/(\d+)$/', $latestStudent->student_id, $m))
             ? intval($m[1]) + 1
             : 1;
+
         $studentId = date('Y') . '-' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
 
         $fullName = trim($validated['first_name'] . ' '
@@ -371,5 +372,19 @@ class PortalController extends Controller
                 'admins'   => Admin::count(),
             ]
         ]);
+    }
+
+    // ✅ BAGONG DAGDAG: Tanggalin ang estudyante sa klase
+    public function destroyEnrollment($id)
+    {
+        $enrollment = Enrollment::find($id);
+        
+        if (!$enrollment) {
+            return redirect()->back()->with('error', 'Enrollment not found.');
+        }
+
+        $enrollment->delete();
+
+        return redirect()->back()->with('success', 'Student removed successfully!');
     }
 }

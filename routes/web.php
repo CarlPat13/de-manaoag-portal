@@ -222,6 +222,8 @@ Route::middleware('auth')->group(function () {
         return view('admin.announcement-edit', compact('announcement'));
     })->name('admin.announcements.edit');
     
+    Route::delete('/admin/enrollments/{id}', [PortalController::class, 'destroyEnrollment'])->name('admin.enrollments.destroy');
+    
     Route::put('/admin/announcements/{announcement}', function (\Illuminate\Http\Request $request, \App\Models\Announcement $announcement) {
         if (auth()->user()->role !== 'admin') return redirect()->route('login');
         $validated = $request->validate([
