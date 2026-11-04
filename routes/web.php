@@ -1,6 +1,7 @@
 <?php
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PortalController;
+use App\Http\Controllers\PasswordResetController;
 
 // === PUBLIC ROUTES ===
 Route::get('/', function () {
@@ -10,6 +11,10 @@ Route::get('/register', [PortalController::class, 'showRegistration'])->name('re
 Route::post('/register', [PortalController::class, 'register']);
 Route::get('/login', [PortalController::class, 'showLogin'])->name('login');
 Route::post('/login', [PortalController::class, 'login']);
+Route::get('/forgot-password', [PasswordResetController::class, 'showForgot'])->name('password.request');
+Route::post('/forgot-password', [PasswordResetController::class, 'sendLink'])->middleware('throttle:5,1')->name('password.email');
+Route::get('/reset-password/{token}', [PasswordResetController::class, 'showReset'])->name('password.reset');
+Route::post('/reset-password', [PasswordResetController::class, 'reset'])->name('password.store');
 Route::post('/logout', [PortalController::class, 'logout'])->name('logout');
 
 // === PROTECTED ROUTES ===
