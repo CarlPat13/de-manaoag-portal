@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forgot Password - De Manaoag University</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(rgba(15, 23, 42, 0.75), rgba(15, 23, 42, 0.85)), 
+                        url('{{ asset('images/bg-campus.jpg') }}') center/cover no-repeat fixed;
+        }
+    </style>
+</head>
+<body>
+    <div class="w-full max-w-md px-6">
+        <div class="bg-white rounded-2xl shadow-2xl p-8">
+            <h2 class="text-lg font-semibold mb-4 text-center">Forgot Password</h2>
+            @if(session('success'))
+                <div class="bg-green-100 text-green-700 p-3 rounded-lg mb-4 text-sm">✅ {{ session('success') }}</div>
+            @endif
+            @if($errors->any())
+                <div class="bg-red-100 text-red-700 p-3 rounded-lg mb-4 text-sm">
+                    @foreach($errors->all() as $error)<p>⚠️ {{ $error }}</p>@endforeach
+                </div>
+            @endif
+            <p class="text-sm text-gray-600 mb-4">Enter your account email and we'll send you a link to reset your password.</p>
+            <form method="POST" action="{{ route('password.email') }}">
+                @csrf
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                        <input type="email" name="email" required value="{{ old('email') }}" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-sm">
+                    </div>
+                    <button type="submit" class="w-full bg-blue-900 text-white py-2 rounded-lg font-semibold hover:bg-blue-800 transition text-sm">SEND RESET LINK</button>
+                </div>
+            </form>
+            <p class="text-center mt-4 text-sm text-gray-600">
+                <a href="{{ route('login') }}" class="text-blue-900 font-semibold hover:underline">Back to login</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>
